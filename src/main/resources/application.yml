@@ -1,0 +1,89 @@
+spring:
+  application:
+    name: greentech-was
+
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/greentech_hr?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
+    username: ${DB_USERNAME:greentech}
+    password: ${DB_PASSWORD:greentech1234}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      # NOTE: 월말 정산 피크 동시접속 40명 기준 - 커넥션 20개면 충분
+      maximum-pool-size: ${DB_POOL_SIZE:20}
+      minimum-idle: 5
+      connection-timeout: 10000
+      pool-name: greentech-hikari
+
+  jpa:
+    hibernate:
+      # NOTE: 스키마 형상은 Flyway 가 소유 - Hibernate 는 검증만 수행
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          batch_size: 50
+          time_zone: Asia/Seoul
+        order_inserts: true
+        order_updates: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    # NOTE: 기존 운영 DB 편입 시 baseline 후 이후 버전만 적용
+    baseline-on-migrate: true
+    baseline-version: 0
+
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 25MB
+
+  jackson:
+    default-property-inclusion: non_null
+
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+  error:
+    include-message: never
+    include-stacktrace: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when-authorized
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: method
+    display-request-duration: true
+  default-produces-media-type: application/json
+
+app:
+  security:
+    # FIXME: 운영 배포 시 아래 3개 값은 반드시 환경변수로 주입
+    jwt-secret: ${JWT_SECRET:0VUHInPxY0okpsu6yRAveTdSbYbC9PqCjcMvvrA94ZQNMsdd}
+    access-token-ttl: ${ACCESS_TOKEN_TTL:8h}
+    field-encryption-key: ${FIELD_ENCRYPTION_KEY:s9Ic2OTzBfKOLeBmRM2oQB0ls6HHIKWC3s3Y9CP+6+Q=}
+    bootstrap-password: ${BOOTSTRAP_PASSWORD:greentech1234!}
+  storage:
+    # NOTE: 첨부파일 약 40GB - DB 아닌 볼륨 보관
+    root: ${FILE_STORAGE_ROOT:./uploads}
+
+logging:
+  level:
+    com.greentech: ${LOG_LEVEL_APP:DEBUG}
+    org.hibernate.SQL: ${LOG_LEVEL_SQL:DEBUG}
+    org.flywaydb: INFO
