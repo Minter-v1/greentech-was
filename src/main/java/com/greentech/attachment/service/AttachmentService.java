@@ -1,10 +1,12 @@
 package com.greentech.attachment.service;
 
+import com.greentech.account.domain.AppRole;
 import com.greentech.attachment.domain.Attachment;
 import com.greentech.attachment.dto.res.AttachmentRes;
 import com.greentech.attachment.repository.AttachmentRepository;
 import com.greentech.common.exception.BusinessException;
 import com.greentech.common.exception.ErrorCode;
+import com.greentech.security.SecurityUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -42,9 +44,31 @@ public class AttachmentService {
 
     @Transactional(readOnly = true)
     public List<AttachmentRes> findByOwner(Attachment.OwnerType ownerType, Long ownerId) {
+        ensureReadable(ownerType, ownerId);
         return attachmentRepository.findByOwnerTypeAndOwnerIdOrderByIdDesc(ownerType, ownerId).stream()
                 .map(AttachmentRes::from)
                 .toList();
+    }
+
+    /**
+     * 첨부파일 열람 권한 검증
+     *
+     * NOTE: 식별자만 알면 타인의 증명서·스캔본이 노출되므로 소유자 확인 필요
+     * TODO: CERTIFICATE 등 사원 외 소유 타입은 현재 인사담당자만 열람 가능
+     *       본인 자격증 스캔본 열람이 필요해지면 owner 를 사원까지 역추적하는 규칙 추가
+     */
+    private void ensureReadable(Attachment.OwnerType ownerType, Long ownerId) {
+        if (SecurityUtils.hasRole(AppRole.ADMIN) || SecurityUtils.hasRole(AppRole.HR)) {
+            return;
+        }
+        Long currentEmployeeId = SecurityUtils.currentEmployeeIdOrNull();
+        boolean ownedByCurrentUser = ownerType == Attachment.OwnerType.EMPLOYEE
+                && currentEmployeeId != null
+                && currentEmployeeId.equals(ownerId);
+
+        if (!ownedByCurrentUser) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인의 첨부파일만 조회할 수 있습니다");
+        }
     }
 
     @Transactional
@@ -89,6 +113,7 @@ public class AttachmentService {
     public DownloadFile download(Long attachmentId) {
         Attachment attachment = attachmentRepository.findById(attachmentId)
                 .orElseThrow(() -> BusinessException.notFound(ErrorCode.ATTACHMENT_NOT_FOUND, attachmentId));
+        ensureReadable(attachment.getOwnerType(), attachment.getOwnerId());
 
         Path path = resolve(attachment.getStoredPath());
         if (!Files.exists(path)) {

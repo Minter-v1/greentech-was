@@ -5,7 +5,8 @@ spring:
   datasource:
     url: ${DB_URL:jdbc:mysql://localhost:3306/greentech_hr?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
     username: ${DB_USERNAME:greentech}
-    password: ${DB_PASSWORD:greentech1234}
+    # NOTE: 기본값 미지정 - 미주입 시 기동 실패로 자격증명 하드코딩 방지
+    password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       # NOTE: 월말 정산 피크 동시접속 40명 기준 - 커넥션 20개면 충분
@@ -73,11 +74,19 @@ springdoc:
 
 app:
   security:
-    # FIXME: 운영 배포 시 아래 3개 값은 반드시 환경변수로 주입
-    jwt-secret: ${JWT_SECRET:0VUHInPxY0okpsu6yRAveTdSbYbC9PqCjcMvvrA94ZQNMsdd}
+    # NOTE: 시크릿에는 기본값을 두지 않는다
+    #       기본값을 두면 그 값이 곧 저장소에 커밋되는 자격증명이 되고,
+    #       미주입 상태로 운영에 올라가도 알아채지 못한다
+    #       미설정 시 placeholder 해석 실패로 기동 단계에서 즉시 중단된다
+    jwt-secret: ${JWT_SECRET}
     access-token-ttl: ${ACCESS_TOKEN_TTL:8h}
-    field-encryption-key: ${FIELD_ENCRYPTION_KEY:s9Ic2OTzBfKOLeBmRM2oQB0ls6HHIKWC3s3Y9CP+6+Q=}
-    bootstrap-password: ${BOOTSTRAP_PASSWORD:greentech1234!}
+    field-encryption-key: ${FIELD_ENCRYPTION_KEY}
+    bootstrap-password: ${BOOTSTRAP_PASSWORD}
+    # NOTE: 관리자 계정은 기동할 때마다 없으면 생성된다
+    #       볼륨을 삭제해도 이 값으로 다시 만들어진다
+    admin:
+      username: ${ADMIN_USERNAME}
+      password: ${ADMIN_PASSWORD}
   storage:
     # NOTE: 첨부파일 약 40GB - DB 아닌 볼륨 보관
     root: ${FILE_STORAGE_ROOT:./uploads}

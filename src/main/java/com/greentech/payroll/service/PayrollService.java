@@ -1,5 +1,6 @@
 package com.greentech.payroll.service;
 
+import com.greentech.account.domain.AppRole;
 import com.greentech.account.domain.AuditLog;
 import com.greentech.account.repository.AuditLogRepository;
 import com.greentech.attendance.domain.Attendance;
@@ -27,6 +28,7 @@ import com.greentech.payroll.repository.PayItemRepository;
 import com.greentech.payroll.repository.PayrollRunRepository;
 import com.greentech.payroll.repository.PayslipRepository;
 import com.greentech.payroll.repository.SalaryContractRepository;
+import com.greentech.security.SecurityUtils;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -86,11 +88,27 @@ public class PayrollService {
                 .toList();
     }
 
+    /**
+     * 급여 명세서 상세 조회
+     *
+     * NOTE: 식별자만 알면 타인 명세서가 노출되므로 소유자 검증 필수
+     */
     @Transactional(readOnly = true)
     public PayslipRes findPayslip(Long payslipId) {
         Payslip payslip = payslipRepository.findWithDetailsById(payslipId)
                 .orElseThrow(() -> BusinessException.notFound(ErrorCode.PAYSLIP_NOT_FOUND, payslipId));
+        ensureReadable(payslip);
         return PayslipRes.from(payslip);
+    }
+
+    private void ensureReadable(Payslip payslip) {
+        if (SecurityUtils.hasRole(AppRole.ADMIN) || SecurityUtils.hasRole(AppRole.HR)) {
+            return;
+        }
+        Long currentEmployeeId = SecurityUtils.currentEmployeeIdOrNull();
+        if (currentEmployeeId == null || !currentEmployeeId.equals(payslip.getEmployee().getId())) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인의 급여 명세서만 조회할 수 있습니다");
+        }
     }
 
     @Transactional(readOnly = true)

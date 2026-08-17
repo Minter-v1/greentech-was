@@ -11,7 +11,8 @@ public record LoginReq(
         @Size(max = 50)
         String username,
 
-        @Schema(description = "비밀번호", example = "greentech1234!")
+        // NOTE: Swagger 예시에도 실제 사용 가능한 값을 넣지 않는다
+        @Schema(description = "비밀번호", example = "********")
         @NotBlank(message = "비밀번호는 필수입니다")
         @Size(max = 100)
         String password) {

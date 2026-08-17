@@ -6,10 +6,12 @@ services:
     container_name: greentech-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root1234}
+      # NOTE: ?err 문법으로 미설정 시 compose 단계에서 즉시 실패시킨다
+      #       기본값을 두면 그 값이 저장소에 커밋되는 자격증명이 된다
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?.env 에 MYSQL_ROOT_PASSWORD 설정 필요}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-greentech_hr}
       MYSQL_USER: ${MYSQL_USER:-greentech}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-greentech1234}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?.env 에 MYSQL_PASSWORD 설정 필요}
       TZ: Asia/Seoul
     command:
       - --character-set-server=utf8mb4
@@ -21,7 +23,8 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root1234}"]
+      # NOTE: 비밀번호를 인자로 넘기면 컨테이너 프로세스 목록에 노출되므로 환경변수 참조 사용
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -39,10 +42,12 @@ services:
     environment:
       DB_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-greentech_hr}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
       DB_USERNAME: ${MYSQL_USER:-greentech}
-      DB_PASSWORD: ${MYSQL_PASSWORD:-greentech1234}
-      JWT_SECRET: ${JWT_SECRET:-0VUHInPxY0okpsu6yRAveTdSbYbC9PqCjcMvvrA94ZQNMsdd}
-      FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:-s9Ic2OTzBfKOLeBmRM2oQB0ls6HHIKWC3s3Y9CP+6+Q=}
-      BOOTSTRAP_PASSWORD: ${BOOTSTRAP_PASSWORD:-greentech1234!}
+      DB_PASSWORD: ${MYSQL_PASSWORD:?.env 에 MYSQL_PASSWORD 설정 필요}
+      JWT_SECRET: ${JWT_SECRET:?.env 에 JWT_SECRET 설정 필요}
+      FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:?.env 에 FIELD_ENCRYPTION_KEY 설정 필요}
+      BOOTSTRAP_PASSWORD: ${BOOTSTRAP_PASSWORD:?.env 에 BOOTSTRAP_PASSWORD 설정 필요}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:?.env 에 ADMIN_USERNAME 설정 필요}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?.env 에 ADMIN_PASSWORD 설정 필요}
       FILE_STORAGE_ROOT: /app/uploads
       TZ: Asia/Seoul
     ports:
