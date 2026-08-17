@@ -23,7 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * NOTE: BCrypt 해시를 시드 SQL 에 하드코딩하지 않기 위해 기동 시점에 생성
  * NOTE: 멱등 동작 - 이미 존재하는 username 은 건너뜀
- * FIXME: 운영 배포 시 bootstrap-password 를 환경변수로 주입하고 최초 로그인 후 변경 필요
+ * NOTE: 볼륨 삭제로 DB 가 비어도 기동할 때마다 관리자 계정이 다시 만들어진다
+ *       마이그레이션 INSERT 와 달리 계정을 실수로 지운 경우에도 복구된다
+ * FIXME: 운영 배포 시 admin 비밀번호는 최초 로그인 후 반드시 변경 필요
  */
 @Slf4j
 @Component
@@ -39,13 +41,18 @@ public class AccountBootstrapper implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        createIfAbsent("admin", null, List.of(AppRole.ADMIN));
-        createIfAbsent("hr01", "20190201", List.of(AppRole.HR, AppRole.EMPLOYEE));
-        createIfAbsent("mgr01", "20210401", List.of(AppRole.MANAGER, AppRole.EMPLOYEE));
-        createIfAbsent("emp01", "20220501", List.of(AppRole.EMPLOYEE));
+        SecurityProperties.Admin admin = properties.admin();
+        createIfAbsent(admin.username(), admin.password(), null, List.of(AppRole.ADMIN));
+
+        // NOTE: 데모·검증용 계정. 운영 반영 시 제거 대상
+        String demoPassword = properties.bootstrapPassword();
+        createIfAbsent("hr01", demoPassword, "20190201", List.of(AppRole.HR, AppRole.EMPLOYEE));
+        createIfAbsent("mgr01", demoPassword, "20210401", List.of(AppRole.MANAGER, AppRole.EMPLOYEE));
+        createIfAbsent("emp01", demoPassword, "20220501", List.of(AppRole.EMPLOYEE));
     }
 
-    private void createIfAbsent(String username, String empNo, List<String> roleCodes) {
+    private void createIfAbsent(
+            String username, String rawPassword, String empNo, List<String> roleCodes) {
         if (appUserRepository.existsByUsername(username)) {
             return;
         }
@@ -69,7 +76,7 @@ public class AccountBootstrapper implements ApplicationRunner {
 
         AppUser user = AppUser.builder()
                 .username(username)
-                .passwordHash(passwordEncoder.encode(properties.bootstrapPassword()))
+                .passwordHash(passwordEncoder.encode(rawPassword))
                 .employee(employee)
                 .enabled(true)
                 .locked(false)
