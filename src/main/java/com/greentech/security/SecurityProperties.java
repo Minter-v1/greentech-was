@@ -11,19 +11,6 @@ public record SecurityProperties(
         String fieldEncryptionKey,
         Admin admin) {
 
-    public SecurityProperties {
-        if (accessTokenTtl == null) {
-            accessTokenTtl = Duration.ofHours(8);
-        }
-    }
-
     /** 관리자 계정 */
-    public record Admin(String username, String password, Boolean resetPasswordOnStart) {
-
-        public Admin {
-            if (resetPasswordOnStart == null) {
-                resetPasswordOnStart = false;
-            }
-        }
-    }
+    public record Admin(String username, String password, Boolean resetPasswordOnStart) {}
 }

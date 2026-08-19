@@ -3,11 +3,17 @@ spring:
     activate:
       on-profile: prod
 
+server:
+  port: ${SERVER_PORT}
+  forward-headers-strategy: framework
+
 app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}
   storage:
     type: ncp
-    endpoint: ${NCP_STORAGE_ENDPOINT:https://kr.object.private.ncloudstorage.com}
-    region: ${NCP_STORAGE_REGION:kr-standard}
+    endpoint: ${NCP_STORAGE_ENDPOINT}
+    region: ${NCP_STORAGE_REGION}
     bucket: ${NCP_STORAGE_BUCKET}
     access-key: ${NCP_STORAGE_ACCESS_KEY}
     secret-key: ${NCP_STORAGE_SECRET_KEY}

@@ -12,21 +12,6 @@ public record StorageProperties(
         String accessKey,
         String secretKey) {
 
-    public StorageProperties {
-        if (type == null) {
-            type = Type.LOCAL;
-        }
-        if (root == null || root.isBlank()) {
-            root = "./uploads";
-        }
-        if (endpoint == null || endpoint.isBlank()) {
-            endpoint = "https://kr.object.private.ncloudstorage.com";
-        }
-        if (region == null || region.isBlank()) {
-            region = "kr-standard";
-        }
-    }
-
     public enum Type {
         LOCAL, NCP
     }

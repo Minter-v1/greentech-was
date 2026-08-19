@@ -2,16 +2,13 @@ spring:
   application:
     name: greentech-was
 
-  profiles:
-    default: local
-
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/greentech_hr?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
-    username: ${DB_USERNAME:greentech}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
-      maximum-pool-size: ${DB_POOL_SIZE:20}
+      maximum-pool-size: ${DB_POOL_SIZE}
       minimum-idle: 5
       connection-timeout: 10000
       pool-name: greentech-hikari
@@ -45,7 +42,6 @@ spring:
     default-property-inclusion: non_null
 
 server:
-  port: ${SERVER_PORT:8080}
   shutdown: graceful
   error:
     include-message: never
@@ -76,15 +72,15 @@ app:
   security:
     # NOTE: 시크릿 기본값 금지. 미설정 시 기동 실패로 유도
     jwt-secret: ${JWT_SECRET}
-    access-token-ttl: ${ACCESS_TOKEN_TTL:8h}
+    access-token-ttl: ${ACCESS_TOKEN_TTL}
     field-encryption-key: ${FIELD_ENCRYPTION_KEY}
     admin:
       username: ${ADMIN_USERNAME}
       password: ${ADMIN_PASSWORD}
-      reset-password-on-start: ${ADMIN_RESET_PASSWORD:false}
+      reset-password-on-start: ${ADMIN_RESET_PASSWORD}
 
 logging:
   level:
-    com.greentech: ${LOG_LEVEL_APP:DEBUG}
-    org.hibernate.SQL: ${LOG_LEVEL_SQL:DEBUG}
+    com.greentech: ${LOG_LEVEL_APP}
+    org.hibernate.SQL: ${LOG_LEVEL_SQL}
     org.flywaydb: INFO

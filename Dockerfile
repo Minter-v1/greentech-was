@@ -22,9 +22,6 @@ RUN groupadd --system greentech \
 COPY --from=builder --chown=greentech:greentech /workspace/build/libs/*.jar app.jar
 
 USER greentech
-EXPOSE 8080
-
-ENV TZ=Asia/Seoul \
-    JAVA_OPTS="-XX:MaxRAMPercentage=75 -Duser.timezone=Asia/Seoul"
+EXPOSE 41783
 
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/app.jar"]

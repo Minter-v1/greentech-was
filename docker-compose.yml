@@ -7,17 +7,17 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?.env 에 MYSQL_ROOT_PASSWORD 설정 필요}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-greentech_hr}
-      MYSQL_USER: ${MYSQL_USER:-greentech}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?.env 에 MYSQL_DATABASE 설정 필요}
+      MYSQL_USER: ${MYSQL_USER:?.env 에 MYSQL_USER 설정 필요}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:?.env 에 MYSQL_PASSWORD 설정 필요}
-      TZ: Asia/Seoul
+      TZ: ${TZ:?.env 에 TZ 설정 필요}
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_0900_ai_ci
       - --default-time-zone=+09:00
       - --innodb-buffer-pool-size=1G
     ports:
-      - "${MYSQL_PORT:-3306}:3306"
+      - "${MYSQL_PORT:?.env 에 MYSQL_PORT 설정 필요}:3306"
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
@@ -37,28 +37,35 @@ services:
       mysql:
         condition: service_healthy
     environment:
-      DB_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-greentech_hr}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-      DB_USERNAME: ${MYSQL_USER:-greentech}
-      DB_PASSWORD: ${MYSQL_PASSWORD:?.env 에 MYSQL_PASSWORD 설정 필요}
+      DB_URL: ${DB_URL:?.env 에 DB_URL 설정 필요}
+      DB_USERNAME: ${DB_USERNAME:?.env 에 DB_USERNAME 설정 필요}
+      DB_PASSWORD: ${DB_PASSWORD:?.env 에 DB_PASSWORD 설정 필요}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:?.env 에 DB_POOL_SIZE 설정 필요}
       JWT_SECRET: ${JWT_SECRET:?.env 에 JWT_SECRET 설정 필요}
+      ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:?.env 에 ACCESS_TOKEN_TTL 설정 필요}
       FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:?.env 에 FIELD_ENCRYPTION_KEY 설정 필요}
       ADMIN_USERNAME: ${ADMIN_USERNAME:?.env 에 ADMIN_USERNAME 설정 필요}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?.env 에 ADMIN_PASSWORD 설정 필요}
-      ADMIN_RESET_PASSWORD: ${ADMIN_RESET_PASSWORD:-false}
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
-      FILE_STORAGE_ROOT: /app/uploads
-      NCP_STORAGE_ENDPOINT: ${NCP_STORAGE_ENDPOINT:-https://kr.object.private.ncloudstorage.com}
-      NCP_STORAGE_REGION: ${NCP_STORAGE_REGION:-kr-standard}
-      NCP_STORAGE_BUCKET: ${NCP_STORAGE_BUCKET:-}
-      NCP_STORAGE_ACCESS_KEY: ${NCP_STORAGE_ACCESS_KEY:-}
-      NCP_STORAGE_SECRET_KEY: ${NCP_STORAGE_SECRET_KEY:-}
-      TZ: Asia/Seoul
+      ADMIN_RESET_PASSWORD: ${ADMIN_RESET_PASSWORD:?.env 에 ADMIN_RESET_PASSWORD 설정 필요}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:?.env 에 SPRING_PROFILES_ACTIVE 설정 필요}
+      SERVER_PORT: ${SERVER_PORT:?.env 에 SERVER_PORT 설정 필요}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:?.env 에 CORS_ALLOWED_ORIGINS 설정 필요}
+      FILE_STORAGE_ROOT: ${FILE_STORAGE_ROOT}
+      NCP_STORAGE_ENDPOINT: ${NCP_STORAGE_ENDPOINT}
+      NCP_STORAGE_REGION: ${NCP_STORAGE_REGION}
+      NCP_STORAGE_BUCKET: ${NCP_STORAGE_BUCKET}
+      NCP_STORAGE_ACCESS_KEY: ${NCP_STORAGE_ACCESS_KEY}
+      NCP_STORAGE_SECRET_KEY: ${NCP_STORAGE_SECRET_KEY}
+      LOG_LEVEL_APP: ${LOG_LEVEL_APP:?.env 에 LOG_LEVEL_APP 설정 필요}
+      LOG_LEVEL_SQL: ${LOG_LEVEL_SQL:?.env 에 LOG_LEVEL_SQL 설정 필요}
+      TZ: ${TZ:?.env 에 TZ 설정 필요}
+      JAVA_OPTS: ${JAVA_OPTS:?.env 에 JAVA_OPTS 설정 필요}
     ports:
-      - "${APP_PORT:-8080}:8080"
+      - "${APP_PORT:?.env 에 APP_PORT 설정 필요}:${SERVER_PORT:?.env 에 SERVER_PORT 설정 필요}"
     volumes:
       - app-uploads:/app/uploads
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:$$SERVER_PORT/actuator/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 12

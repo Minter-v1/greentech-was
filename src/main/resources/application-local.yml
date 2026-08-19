@@ -3,7 +3,12 @@ spring:
     activate:
       on-profile: local
 
+server:
+  port: ${SERVER_PORT}
+
 app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}
   storage:
     type: local
-    root: ${FILE_STORAGE_ROOT:./uploads}
+    root: ${FILE_STORAGE_ROOT}
