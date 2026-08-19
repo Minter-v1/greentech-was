@@ -1,0 +1,13 @@
+.git
+.gradle
+.idea
+.vscode
+build
+out
+tmp
+uploads
+.env
+.env.*
+*.log
+*.tar
+*.tar.gz
