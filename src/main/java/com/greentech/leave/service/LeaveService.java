@@ -1,5 +1,6 @@
 package com.greentech.leave.service;
 
+import com.greentech.account.domain.AppRole;
 import com.greentech.attendance.domain.WorkCalendar;
 import com.greentech.attendance.repository.WorkCalendarRepository;
 import com.greentech.common.dto.res.PageResult;
@@ -19,6 +20,7 @@ import com.greentech.leave.dto.res.LeaveTypeRes;
 import com.greentech.leave.repository.LeaveBalanceRepository;
 import com.greentech.leave.repository.LeaveRequestRepository;
 import com.greentech.leave.repository.LeaveTypeRepository;
+import com.greentech.security.SecurityUtils;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -70,10 +72,21 @@ public class LeaveService {
     }
 
     @Transactional(readOnly = true)
-    public PageResult<LeaveRequestRes> findRequests(ApprovalStatus status, Pageable pageable) {
-        Page<LeaveRequest> page = status == null
-                ? leaveRequestRepository.findAllByOrderByIdDesc(pageable)
-                : leaveRequestRepository.findByStatusOrderByIdDesc(status, pageable);
+    public PageResult<LeaveRequestRes> findRequests(
+            ApprovalStatus status, Long approverEmployeeId, Pageable pageable) {
+        Page<LeaveRequest> page;
+        if (isManagerOnly()) {
+            if (approverEmployeeId == null) throw new BusinessException(ErrorCode.NO_LINKED_EMPLOYEE);
+            page = status == null
+                    ? leaveRequestRepository.findByEmployeeManagerIdOrderByIdDesc(
+                            approverEmployeeId, pageable)
+                    : leaveRequestRepository.findByEmployeeManagerIdAndStatusOrderByIdDesc(
+                            approverEmployeeId, status, pageable);
+        } else {
+            page = status == null
+                    ? leaveRequestRepository.findAllByOrderByIdDesc(pageable)
+                    : leaveRequestRepository.findByStatusOrderByIdDesc(status, pageable);
+        }
         return PageResult.of(page, LeaveRequestRes::from);
     }
 
@@ -128,13 +141,14 @@ public class LeaveService {
     public LeaveRequestRes approve(Long requestId, Long approverEmployeeId) {
         LeaveRequest request = getRequestOrThrow(requestId);
         ensureProcessable(request);
+        ensureApprovalScope(request.getEmployee(), approverEmployeeId);
 
         LeaveType leaveType = request.getLeaveType();
         if (leaveType.isDeductAnnual()) {
             deductBalance(request);
         }
 
-        request.approve(getEmployeeOrThrow(approverEmployeeId), LocalDateTime.now());
+        request.approve(getEmployeeOrNull(approverEmployeeId), LocalDateTime.now());
         return LeaveRequestRes.from(request);
     }
 
@@ -142,8 +156,9 @@ public class LeaveService {
     public LeaveRequestRes reject(Long requestId, Long approverEmployeeId, LeaveRejectReq body) {
         LeaveRequest request = getRequestOrThrow(requestId);
         ensureProcessable(request);
+        ensureApprovalScope(request.getEmployee(), approverEmployeeId);
 
-        request.reject(getEmployeeOrThrow(approverEmployeeId), LocalDateTime.now(), body.rejectReason());
+        request.reject(getEmployeeOrNull(approverEmployeeId), LocalDateTime.now(), body.rejectReason());
         return LeaveRequestRes.from(request);
     }
 
@@ -176,6 +191,21 @@ public class LeaveService {
         if (request.getStatus() != ApprovalStatus.REQUESTED) {
             throw new BusinessException(ErrorCode.LEAVE_ALREADY_PROCESSED);
         }
+    }
+
+    private void ensureApprovalScope(Employee employee, Long approverEmployeeId) {
+        if (!isManagerOnly()) return;
+        if (approverEmployeeId == null
+                || employee.getManager() == null
+                || !approverEmployeeId.equals(employee.getManager().getId())) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "직속 부하 직원의 신청만 결재할 수 있습니다");
+        }
+    }
+
+    private boolean isManagerOnly() {
+        return SecurityUtils.hasRole(AppRole.MANAGER)
+                && !SecurityUtils.hasRole(AppRole.ADMIN)
+                && !SecurityUtils.hasRole(AppRole.HR);
     }
 
     private void deductBalance(LeaveRequest request) {
@@ -233,5 +263,9 @@ public class LeaveService {
     private Employee getEmployeeOrThrow(Long id) {
         return employeeRepository.findById(id)
                 .orElseThrow(() -> BusinessException.notFound(ErrorCode.EMPLOYEE_NOT_FOUND, id));
+    }
+
+    private Employee getEmployeeOrNull(Long id) {
+        return id == null ? null : getEmployeeOrThrow(id);
     }
 }

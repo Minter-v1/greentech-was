@@ -19,6 +19,10 @@ public interface OvertimeRequestRepository extends JpaRepository<OvertimeRequest
     @EntityGraph(attributePaths = {"employee"})
     Page<OvertimeRequest> findByStatusOrderByIdDesc(ApprovalStatus status, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"employee"})
+    Page<OvertimeRequest> findByEmployeeManagerIdAndStatusOrderByIdDesc(
+            Long managerId, ApprovalStatus status, Pageable pageable);
+
     List<OvertimeRequest> findByEmployeeIdAndWorkDateBetweenAndStatus(
             Long employeeId, LocalDate from, LocalDate to, ApprovalStatus status);
 

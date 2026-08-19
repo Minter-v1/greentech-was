@@ -23,6 +23,13 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
     @EntityGraph(attributePaths = {"employee", "leaveType"})
     Page<LeaveRequest> findAllByOrderByIdDesc(Pageable pageable);
 
+    @EntityGraph(attributePaths = {"employee", "leaveType"})
+    Page<LeaveRequest> findByEmployeeManagerIdOrderByIdDesc(Long managerId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"employee", "leaveType"})
+    Page<LeaveRequest> findByEmployeeManagerIdAndStatusOrderByIdDesc(
+            Long managerId, ApprovalStatus status, Pageable pageable);
+
     @Query("""
             select count(r) from LeaveRequest r
             where r.employee.id = :employeeId

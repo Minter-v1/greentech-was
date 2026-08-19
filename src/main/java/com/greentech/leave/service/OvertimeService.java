@@ -1,5 +1,6 @@
 package com.greentech.leave.service;
 
+import com.greentech.account.domain.AppRole;
 import com.greentech.common.dto.res.PageResult;
 import com.greentech.common.enums.ApprovalStatus;
 import com.greentech.common.exception.BusinessException;
@@ -10,6 +11,7 @@ import com.greentech.leave.domain.OvertimeRequest;
 import com.greentech.leave.dto.req.OvertimeCreateReq;
 import com.greentech.leave.dto.res.OvertimeRequestRes;
 import com.greentech.leave.repository.OvertimeRequestRepository;
+import com.greentech.security.SecurityUtils;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
@@ -57,9 +59,16 @@ public class OvertimeService {
     }
 
     @Transactional(readOnly = true)
-    public PageResult<OvertimeRequestRes> findByStatus(ApprovalStatus status, Pageable pageable) {
-        Page<OvertimeRequest> page =
-                overtimeRequestRepository.findByStatusOrderByIdDesc(status, pageable);
+    public PageResult<OvertimeRequestRes> findByStatus(
+            ApprovalStatus status, Long approverEmployeeId, Pageable pageable) {
+        Page<OvertimeRequest> page;
+        if (isManagerOnly()) {
+            if (approverEmployeeId == null) throw new BusinessException(ErrorCode.NO_LINKED_EMPLOYEE);
+            page = overtimeRequestRepository.findByEmployeeManagerIdAndStatusOrderByIdDesc(
+                    approverEmployeeId, status, pageable);
+        } else {
+            page = overtimeRequestRepository.findByStatusOrderByIdDesc(status, pageable);
+        }
         return PageResult.of(page, OvertimeRequestRes::from);
     }
 
@@ -67,7 +76,8 @@ public class OvertimeService {
     public OvertimeRequestRes approve(Long requestId, Long approverEmployeeId) {
         OvertimeRequest request = getOrThrow(requestId);
         ensureProcessable(request);
-        request.approve(getEmployeeOrThrow(approverEmployeeId), LocalDateTime.now());
+        ensureApprovalScope(request.getEmployee(), approverEmployeeId);
+        request.approve(getEmployeeOrNull(approverEmployeeId), LocalDateTime.now());
         return OvertimeRequestRes.from(request);
     }
 
@@ -75,7 +85,8 @@ public class OvertimeService {
     public OvertimeRequestRes reject(Long requestId, Long approverEmployeeId) {
         OvertimeRequest request = getOrThrow(requestId);
         ensureProcessable(request);
-        request.reject(getEmployeeOrThrow(approverEmployeeId), LocalDateTime.now());
+        ensureApprovalScope(request.getEmployee(), approverEmployeeId);
+        request.reject(getEmployeeOrNull(approverEmployeeId), LocalDateTime.now());
         return OvertimeRequestRes.from(request);
     }
 
@@ -83,6 +94,21 @@ public class OvertimeService {
         if (request.getStatus() != ApprovalStatus.REQUESTED) {
             throw new BusinessException(ErrorCode.OVERTIME_ALREADY_PROCESSED);
         }
+    }
+
+    private void ensureApprovalScope(Employee employee, Long approverEmployeeId) {
+        if (!isManagerOnly()) return;
+        if (approverEmployeeId == null
+                || employee.getManager() == null
+                || !approverEmployeeId.equals(employee.getManager().getId())) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "직속 부하 직원의 신청만 결재할 수 있습니다");
+        }
+    }
+
+    private boolean isManagerOnly() {
+        return SecurityUtils.hasRole(AppRole.MANAGER)
+                && !SecurityUtils.hasRole(AppRole.ADMIN)
+                && !SecurityUtils.hasRole(AppRole.HR);
     }
 
     private OvertimeRequest getOrThrow(Long id) {
@@ -93,5 +119,9 @@ public class OvertimeService {
     private Employee getEmployeeOrThrow(Long id) {
         return employeeRepository.findById(id)
                 .orElseThrow(() -> BusinessException.notFound(ErrorCode.EMPLOYEE_NOT_FOUND, id));
+    }
+
+    private Employee getEmployeeOrNull(Long id) {
+        return id == null ? null : getEmployeeOrThrow(id);
     }
 }

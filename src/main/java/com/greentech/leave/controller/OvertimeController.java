@@ -58,7 +58,8 @@ public class OvertimeController {
     public ApiResult<PageResult<OvertimeRequestRes>> findByStatus(
             @Parameter(description = "결재 상태") @RequestParam(defaultValue = "REQUESTED") ApprovalStatus status,
             @PageableDefault(size = 20) Pageable pageable) {
-        return ApiResult.ok(overtimeService.findByStatus(status, pageable));
+        return ApiResult.ok(overtimeService.findByStatus(
+                status, SecurityUtils.currentEmployeeIdOrNull(), pageable));
     }
 
     @Operation(summary = "연장근무 승인")
@@ -66,7 +67,7 @@ public class OvertimeController {
     @PostMapping("/{id}/approve")
     public ApiResult<OvertimeRequestRes> approve(@PathVariable Long id) {
         return ApiResult.ok(
-                overtimeService.approve(id, SecurityUtils.currentEmployeeId()), "연장근무가 승인되었습니다");
+                overtimeService.approve(id, SecurityUtils.currentEmployeeIdOrNull()), "연장근무가 승인되었습니다");
     }
 
     @Operation(summary = "연장근무 반려")
@@ -74,6 +75,6 @@ public class OvertimeController {
     @PostMapping("/{id}/reject")
     public ApiResult<OvertimeRequestRes> reject(@PathVariable Long id) {
         return ApiResult.ok(
-                overtimeService.reject(id, SecurityUtils.currentEmployeeId()), "연장근무가 반려되었습니다");
+                overtimeService.reject(id, SecurityUtils.currentEmployeeIdOrNull()), "연장근무가 반려되었습니다");
     }
 }

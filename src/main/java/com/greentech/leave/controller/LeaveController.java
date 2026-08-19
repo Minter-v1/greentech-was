@@ -39,6 +39,10 @@ public class LeaveController {
 
     private static final String APPROVER =
             "hasAnyAuthority('" + AppRole.ADMIN + "', '" + AppRole.HR + "', '" + AppRole.MANAGER + "')";
+    private static final String TEAM_BALANCE_READER =
+            "hasAnyAuthority('" + AppRole.ADMIN + "', '" + AppRole.HR + "')"
+                    + " or (hasAuthority('" + AppRole.MANAGER + "')"
+                    + " and @employeeAuthorization.isManagerOf(#employeeId))";
 
     private final LeaveService leaveService;
 
@@ -58,7 +62,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "사원 휴가 잔여 조회")
-    @PreAuthorize(APPROVER)
+    @PreAuthorize(TEAM_BALANCE_READER)
     @GetMapping("/balances/employees/{employeeId}")
     public ApiResult<List<LeaveBalanceRes>> findBalances(
             @PathVariable Long employeeId,
@@ -89,14 +93,15 @@ public class LeaveController {
     public ApiResult<PageResult<LeaveRequestRes>> findRequests(
             @Parameter(description = "결재 상태") @RequestParam(required = false) ApprovalStatus status,
             @PageableDefault(size = 20) Pageable pageable) {
-        return ApiResult.ok(leaveService.findRequests(status, pageable));
+        return ApiResult.ok(leaveService.findRequests(
+                status, SecurityUtils.currentEmployeeIdOrNull(), pageable));
     }
 
     @Operation(summary = "휴가 승인", description = "연차 차감 대상이면 승인 시점에 잔여 차감")
     @PreAuthorize(APPROVER)
     @PostMapping("/requests/{id}/approve")
     public ApiResult<LeaveRequestRes> approve(@PathVariable Long id) {
-        LeaveRequestRes result = leaveService.approve(id, SecurityUtils.currentEmployeeId());
+        LeaveRequestRes result = leaveService.approve(id, SecurityUtils.currentEmployeeIdOrNull());
         return ApiResult.ok(result, "휴가가 승인되었습니다");
     }
 
@@ -105,7 +110,7 @@ public class LeaveController {
     @PostMapping("/requests/{id}/reject")
     public ApiResult<LeaveRequestRes> reject(
             @PathVariable Long id, @Valid @RequestBody LeaveRejectReq request) {
-        LeaveRequestRes result = leaveService.reject(id, SecurityUtils.currentEmployeeId(), request);
+        LeaveRequestRes result = leaveService.reject(id, SecurityUtils.currentEmployeeIdOrNull(), request);
         return ApiResult.ok(result, "휴가가 반려되었습니다");
     }
 
