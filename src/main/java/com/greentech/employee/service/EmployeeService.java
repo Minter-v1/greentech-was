@@ -14,7 +14,8 @@ import com.greentech.employee.dto.req.EducationCreateReq;
 import com.greentech.employee.dto.req.EmployeeContactUpsertReq;
 import com.greentech.employee.dto.req.EmployeeCreateReq;
 import com.greentech.employee.dto.req.EmployeeResignReq;
-import com.greentech.employee.dto.req.EmployeeUpdateReq;
+import com.greentech.employee.dto.req.EmployeePatchReq;
+import com.greentech.employee.dto.req.EmployeeStatusChangeReq;
 import com.greentech.employee.dto.req.FamilyMemberCreateReq;
 import com.greentech.employee.dto.res.CertificateRes;
 import com.greentech.employee.dto.res.EducationRes;
@@ -33,7 +34,10 @@ import com.greentech.org.domain.Department;
 import com.greentech.org.domain.JobPosition;
 import com.greentech.org.repository.DepartmentRepository;
 import com.greentech.org.repository.JobPositionRepository;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
+import org.openapitools.jackson.nullable.JsonNullable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -91,7 +95,6 @@ public class EmployeeService {
 
         Employee saved = employeeRepository.save(employee);
 
-        // NOTE: 입사도 발령의 한 종류 - 이력을 처음부터 남겨야 이후 변동 추적 가능
         employmentHistoryRepository.save(EmploymentHistory.builder()
                 .employee(saved)
                 .changeType(EmploymentHistory.ChangeType.HIRE)
@@ -104,34 +107,51 @@ public class EmployeeService {
         return EmployeeDetailRes.from(saved);
     }
 
-    /**
-     * 사원 정보 수정
-     *
-     * NOTE: 부서·직위 변경 감지 시 발령 이력 자동 생성
-     */
+    /** 사원 부분 수정. 전송한 필드만 반영하고 부서나 직위가 바뀌면 발령 이력 기록 */
     @Transactional
-    public EmployeeDetailRes update(Long id, EmployeeUpdateReq request) {
+    public EmployeeDetailRes patch(Long id, EmployeePatchReq request) {
         Employee employee = getWithOrgOrThrow(id);
 
-        Long beforeDepartmentId = employee.getDepartment() != null ? employee.getDepartment().getId() : null;
-        Long beforePositionId = employee.getJobPosition() != null ? employee.getJobPosition().getId() : null;
+        Long beforeDepartmentId = idOf(employee.getDepartment());
+        Long beforePositionId = idOf(employee.getJobPosition());
 
-        employee.setName(request.name());
-        employee.setNameEn(request.nameEn());
-        employee.setBirthDate(request.birthDate());
-        employee.setGender(request.gender());
-        employee.setEmail(request.email());
-        employee.setDepartment(resolveDepartment(request.departmentId()));
-        employee.setJobPosition(resolvePosition(request.jobPositionId()));
-        employee.setManager(resolveManager(request.managerId()));
-        if (request.employmentType() != null) {
-            employee.setEmploymentType(request.employmentType());
-        }
-        if (request.status() != null) {
-            employee.setStatus(request.status());
+        apply(request.name(), employee::setName);
+        apply(request.nameEn(), employee::setNameEn);
+        apply(request.birthDate(), employee::setBirthDate);
+        apply(request.gender(), employee::setGender);
+        apply(request.email(), employee::setEmail);
+        apply(request.employmentType(), employee::setEmploymentType);
+        apply(request.departmentId(), value -> employee.setDepartment(resolveDepartment(value)));
+        apply(request.jobPositionId(), value -> employee.setJobPosition(resolvePosition(value)));
+        apply(request.managerId(), value -> employee.setManager(resolveManager(value)));
+
+        recordOrgChange(employee, beforeDepartmentId, beforePositionId, unwrap(request.reason()));
+        return EmployeeDetailRes.from(employee);
+    }
+
+    @Transactional
+    public EmployeeDetailRes reinstate(Long id, EmployeeStatusChangeReq request) {
+        Employee employee = getWithOrgOrThrow(id);
+        if (employee.getStatus() == Employee.Status.ACTIVE) {
+            throw new BusinessException(ErrorCode.CONFLICT, "이미 재직 중인 사원입니다");
         }
 
-        recordOrgChange(employee, beforeDepartmentId, beforePositionId);
+        employee.reinstate();
+        saveHistory(employee, EmploymentHistory.ChangeType.REINSTATE, request.effectiveDate(),
+                request.reason() != null ? request.reason() : "복직");
+        return EmployeeDetailRes.from(employee);
+    }
+
+    @Transactional
+    public EmployeeDetailRes takeLeaveOfAbsence(Long id, EmployeeStatusChangeReq request) {
+        Employee employee = getWithOrgOrThrow(id);
+        if (employee.getStatus() != Employee.Status.ACTIVE) {
+            throw new BusinessException(ErrorCode.CONFLICT, "재직 중인 사원만 휴직 처리할 수 있습니다");
+        }
+
+        employee.takeLeaveOfAbsence();
+        saveHistory(employee, EmploymentHistory.ChangeType.LEAVE_OF_ABSENCE, request.effectiveDate(),
+                request.reason() != null ? request.reason() : "휴직");
         return EmployeeDetailRes.from(employee);
     }
 
@@ -184,7 +204,7 @@ public class EmployeeService {
         return EmployeeContactRes.from(contact);
     }
 
-    // MARK: 학력·자격증·가족사항
+    // MARK: 학력, 자격증, 가족사항
 
     @Transactional(readOnly = true)
     public List<EducationRes> findEducations(Long employeeId) {
@@ -275,30 +295,67 @@ public class EmployeeService {
 
     // MARK: 내부 헬퍼
 
-    private void recordOrgChange(Employee employee, Long beforeDepartmentId, Long beforePositionId) {
-        Long afterDepartmentId = employee.getDepartment() != null ? employee.getDepartment().getId() : null;
-        Long afterPositionId = employee.getJobPosition() != null ? employee.getJobPosition().getId() : null;
+    // NOTE: 부서와 직위가 함께 바뀌면 전보와 승진을 각각 남긴다. 한 건으로 합치면 전보 사실이 사라진다
+    private void recordOrgChange(
+            Employee employee, Long beforeDepartmentId, Long beforePositionId, String reason) {
+        Long afterDepartmentId = idOf(employee.getDepartment());
+        Long afterPositionId = idOf(employee.getJobPosition());
 
-        boolean departmentChanged = !java.util.Objects.equals(beforeDepartmentId, afterDepartmentId);
-        boolean positionChanged = !java.util.Objects.equals(beforePositionId, afterPositionId);
-        if (!departmentChanged && !positionChanged) {
-            return;
+        if (!Objects.equals(beforeDepartmentId, afterDepartmentId)) {
+            EmploymentHistory history = newHistory(
+                    employee, EmploymentHistory.ChangeType.TRANSFER, LocalDate.now(),
+                    reason != null ? reason : "부서 이동");
+            history.setBeforeDepartmentId(beforeDepartmentId);
+            history.setAfterDepartmentId(afterDepartmentId);
+            employmentHistoryRepository.save(history);
         }
 
-        EmploymentHistory.ChangeType changeType = positionChanged
-                ? EmploymentHistory.ChangeType.PROMOTION
-                : EmploymentHistory.ChangeType.TRANSFER;
+        if (!Objects.equals(beforePositionId, afterPositionId)) {
+            EmploymentHistory history = newHistory(
+                    employee, EmploymentHistory.ChangeType.PROMOTION, LocalDate.now(),
+                    reason != null ? reason : "직위 변경");
+            history.setBeforePositionId(beforePositionId);
+            history.setAfterPositionId(afterPositionId);
+            employmentHistoryRepository.save(history);
+        }
+    }
 
-        employmentHistoryRepository.save(EmploymentHistory.builder()
+    private void saveHistory(
+            Employee employee, EmploymentHistory.ChangeType type, LocalDate effectiveDate, String reason) {
+        EmploymentHistory history = newHistory(employee, type, effectiveDate, reason);
+        history.setBeforeDepartmentId(idOf(employee.getDepartment()));
+        history.setBeforePositionId(idOf(employee.getJobPosition()));
+        employmentHistoryRepository.save(history);
+    }
+
+    private EmploymentHistory newHistory(
+            Employee employee, EmploymentHistory.ChangeType type, LocalDate effectiveDate, String reason) {
+        return EmploymentHistory.builder()
                 .employee(employee)
-                .changeType(changeType)
-                .effectiveDate(java.time.LocalDate.now())
-                .beforeDepartmentId(beforeDepartmentId)
-                .afterDepartmentId(afterDepartmentId)
-                .beforePositionId(beforePositionId)
-                .afterPositionId(afterPositionId)
-                .reason("사원 정보 수정에 따른 자동 기록")
-                .build());
+                .changeType(type)
+                .effectiveDate(effectiveDate)
+                .reason(reason)
+                .build();
+    }
+
+    private <T> void apply(JsonNullable<T> field, java.util.function.Consumer<T> setter) {
+        if (field != null && field.isPresent()) {
+            setter.accept(field.get());
+        }
+    }
+
+    private <T> T unwrap(JsonNullable<T> field) {
+        return (field != null && field.isPresent()) ? field.get() : null;
+    }
+
+    private Long idOf(Object entity) {
+        if (entity instanceof Department department) {
+            return department.getId();
+        }
+        if (entity instanceof JobPosition position) {
+            return position.getId();
+        }
+        return null;
     }
 
     private Department resolveDepartment(Long departmentId) {

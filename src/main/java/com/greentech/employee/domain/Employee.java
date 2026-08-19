@@ -86,10 +86,21 @@ public class Employee extends BaseEntity {
     @Column(name = "resign_date")
     private LocalDate resignDate;
 
-    /** 퇴사 처리. 상태·퇴사일 동시 변경으로 불일치 방지 */
+    /** 퇴사 처리. 상태와 퇴사일 동시 변경 */
     public void resign(LocalDate date) {
         this.status = Status.RESIGNED;
         this.resignDate = date;
+    }
+
+    /** 복직 처리. 퇴사일을 지워 재직 상태와 일치시킨다 */
+    public void reinstate() {
+        this.status = Status.ACTIVE;
+        this.resignDate = null;
+    }
+
+    /** 휴직 처리 */
+    public void takeLeaveOfAbsence() {
+        this.status = Status.ON_LEAVE;
     }
 
     public boolean isActive() {

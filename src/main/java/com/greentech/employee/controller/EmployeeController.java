@@ -9,7 +9,8 @@ import com.greentech.employee.dto.req.EducationCreateReq;
 import com.greentech.employee.dto.req.EmployeeContactUpsertReq;
 import com.greentech.employee.dto.req.EmployeeCreateReq;
 import com.greentech.employee.dto.req.EmployeeResignReq;
-import com.greentech.employee.dto.req.EmployeeUpdateReq;
+import com.greentech.employee.dto.req.EmployeePatchReq;
+import com.greentech.employee.dto.req.EmployeeStatusChangeReq;
 import com.greentech.employee.dto.req.FamilyMemberCreateReq;
 import com.greentech.employee.dto.res.CertificateRes;
 import com.greentech.employee.dto.res.EducationRes;
@@ -77,12 +78,29 @@ public class EmployeeController {
         return ApiResult.ok(employeeService.create(request), "사원이 등록되었습니다");
     }
 
-    @Operation(summary = "사원 수정", description = "부서·직위 변경 시 발령 이력 자동 기록")
+    @Operation(summary = "사원 부분 수정",
+            description = "전송한 필드만 반영. 부서나 직위가 바뀌면 발령 이력 자동 기록")
     @PreAuthorize(HR_OR_ADMIN)
-    @PutMapping("/{id}")
-    public ApiResult<EmployeeDetailRes> update(
-            @PathVariable Long id, @Valid @RequestBody EmployeeUpdateReq request) {
-        return ApiResult.ok(employeeService.update(id, request), "사원 정보가 수정되었습니다");
+    @PatchMapping("/{id}")
+    public ApiResult<EmployeeDetailRes> patch(
+            @PathVariable Long id, @Valid @RequestBody EmployeePatchReq request) {
+        return ApiResult.ok(employeeService.patch(id, request), "사원 정보가 수정되었습니다");
+    }
+
+    @Operation(summary = "휴직 처리")
+    @PreAuthorize(HR_OR_ADMIN)
+    @PatchMapping("/{id}/leave-of-absence")
+    public ApiResult<EmployeeDetailRes> takeLeaveOfAbsence(
+            @PathVariable Long id, @Valid @RequestBody EmployeeStatusChangeReq request) {
+        return ApiResult.ok(employeeService.takeLeaveOfAbsence(id, request), "휴직 처리되었습니다");
+    }
+
+    @Operation(summary = "복직 처리", description = "재직 상태로 되돌리고 퇴사일을 지운다")
+    @PreAuthorize(HR_OR_ADMIN)
+    @PatchMapping("/{id}/reinstate")
+    public ApiResult<EmployeeDetailRes> reinstate(
+            @PathVariable Long id, @Valid @RequestBody EmployeeStatusChangeReq request) {
+        return ApiResult.ok(employeeService.reinstate(id, request), "복직 처리되었습니다");
     }
 
     @Operation(summary = "퇴사 처리", description = "재직 상태와 퇴사일을 함께 변경하고 RESIGN 이력 기록")
