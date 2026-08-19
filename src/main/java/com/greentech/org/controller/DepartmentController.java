@@ -3,7 +3,7 @@ package com.greentech.org.controller;
 import com.greentech.account.domain.AppRole;
 import com.greentech.common.dto.res.ApiResult;
 import com.greentech.org.dto.req.DepartmentCreateReq;
-import com.greentech.org.dto.req.DepartmentUpdateReq;
+import com.greentech.org.dto.req.DepartmentPatchReq;
 import com.greentech.org.dto.res.DepartmentRes;
 import com.greentech.org.dto.res.DepartmentTreeRes;
 import com.greentech.org.service.DepartmentService;
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -62,12 +62,12 @@ public class DepartmentController {
         return ApiResult.ok(departmentService.create(request), "부서가 등록되었습니다");
     }
 
-    @Operation(summary = "부서 수정")
+    @Operation(summary = "부서 부분 수정", description = "전송한 필드만 반영")
     @PreAuthorize("hasAnyAuthority('" + AppRole.ADMIN + "', '" + AppRole.HR + "')")
-    @PutMapping("/{id}")
-    public ApiResult<DepartmentRes> update(
-            @PathVariable Long id, @Valid @RequestBody DepartmentUpdateReq request) {
-        return ApiResult.ok(departmentService.update(id, request), "부서가 수정되었습니다");
+    @PatchMapping("/{id}")
+    public ApiResult<DepartmentRes> patch(
+            @PathVariable Long id, @Valid @RequestBody DepartmentPatchReq request) {
+        return ApiResult.ok(departmentService.patch(id, request), "부서가 수정되었습니다");
     }
 
     @Operation(summary = "부서 비활성화", description = "참조 무결성 유지 목적으로 물리 삭제 대신 비활성화 처리")
