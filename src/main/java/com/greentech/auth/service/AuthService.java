@@ -1,6 +1,5 @@
 package com.greentech.auth.service;
 
-import com.greentech.account.domain.AppRole;
 import com.greentech.account.domain.AppUser;
 import com.greentech.account.domain.AuditLog;
 import com.greentech.account.repository.AppUserRepository;
@@ -75,11 +74,10 @@ public class AuthService {
     }
 
     @Transactional(readOnly = true)
-    public MeRes me(String username) {
+    public MeRes me(String username, List<String> roles) {
         AppUser user = appUserRepository.findByUsername(username)
                 .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
 
-        List<String> roles = user.getRoles().stream().map(AppRole::getCode).toList();
         Employee employee = user.getEmployee();
 
         return new MeRes(

@@ -43,7 +43,8 @@ public class AuthController {
     @Operation(summary = "내 정보 조회", description = "토큰에 연결된 계정과 사원 정보 조회")
     @GetMapping("/me")
     public ApiResult<MeRes> me() {
-        return ApiResult.ok(authService.me(SecurityUtils.currentUsername()));
+        return ApiResult.ok(authService.me(
+                SecurityUtils.currentUsername(), SecurityUtils.currentRoles()));
     }
 
     private String resolveClientIp(HttpServletRequest request) {

@@ -2,6 +2,7 @@ package com.greentech.security;
 
 import com.greentech.common.exception.BusinessException;
 import com.greentech.common.exception.ErrorCode;
+import java.util.List;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -48,5 +49,15 @@ public final class SecurityUtils {
         }
         return authentication.getAuthorities().stream()
                 .anyMatch(granted -> roleCode.equals(granted.getAuthority()));
+    }
+
+    public static List<String> currentRoles() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+        return authentication.getAuthorities().stream()
+                .map(granted -> granted.getAuthority())
+                .toList();
     }
 }
