@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-/** 급여 명세서 항목별 금액. 항목코드·명은 마스터 변경 대비 스냅샷 저장 */
+/** 급여 명세서 항목별 금액. 항목코드와 명은 스냅샷 */
 @Entity
 @Table(name = "payslip_detail")
 @Getter

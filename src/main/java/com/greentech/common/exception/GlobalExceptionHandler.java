@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResult<Void>> handleBusiness(
             BusinessException e, HttpServletRequest request) {
         ErrorCode code = e.getErrorCode();
-        // NOTE: 4xx 는 정상 업무 흐름 - 스택트레이스 미기록
+        // NOTE: 4xx 는 정상 업무 흐름이라 스택트레이스 미기록
         log.warn("업무 예외 [{}] {} - {}", code.name(), request.getRequestURI(), e.getMessage());
         return ResponseEntity.status(code.getStatus())
                 .body(ApiResult.error(code.name(), e.getMessage(), request.getRequestURI()));

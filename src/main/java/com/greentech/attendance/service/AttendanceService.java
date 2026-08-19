@@ -147,11 +147,7 @@ public class AttendanceService {
         return WorkCalendarRes.from(workCalendarRepository.save(calendar));
     }
 
-    /**
-     * 근무일 판정
-     *
-     * NOTE: 달력에 행이 있으면 그 값 우선, 없으면 요일로 판정
-     */
+    /** 근무일 판정. 달력 등록분 우선, 미등록은 요일 기준 */
     @Transactional(readOnly = true)
     public boolean isWorkday(LocalDate date) {
         return workCalendarRepository.findByCalendarDate(date)

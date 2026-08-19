@@ -15,11 +15,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-/**
- * 연도별 공제 요율 - 4대보험·세율
- *
- * NOTE: 요율은 매년 변동 - 코드가 아닌 데이터로 관리
- */
+/** 연도별 공제 요율. 매년 바뀌므로 데이터로 관리 */
 @Entity
 @Table(name = "deduction_rate")
 @Getter
@@ -35,7 +31,7 @@ public class DeductionRate extends BaseEntity {
     @Column(nullable = false)
     private int year;
 
-    /** PayItem 중 DEDUCTION 항목 코드와 연결 */
+    /** PayItem 의 DEDUCTION 항목 코드 */
     @Column(name = "item_code", nullable = false, length = 30)
     private String itemCode;
 

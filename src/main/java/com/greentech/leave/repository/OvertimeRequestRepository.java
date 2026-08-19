@@ -22,7 +22,6 @@ public interface OvertimeRequestRepository extends JpaRepository<OvertimeRequest
     List<OvertimeRequest> findByEmployeeIdAndWorkDateBetweenAndStatus(
             Long employeeId, LocalDate from, LocalDate to, ApprovalStatus status);
 
-    // NOTE: 급여 정산 시 승인된 연장근무 분 집계
     @Query("""
             select coalesce(sum(o.minutes), 0) from OvertimeRequest o
             where o.employee.id = :employeeId

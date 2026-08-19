@@ -23,11 +23,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-/**
- * 급여 명세서 - 사원 1명 기준 1개월 단위
- *
- * NOTE: 부서명·직위명·사번은 정산 시점 스냅샷 - 이후 조직 변동에도 과거 명세서 불변 보장
- */
+// NOTE: 부서명, 직위명, 사번은 정산 시점 스냅샷. 조직 변동에도 과거 명세서 불변
 @Entity
 @Table(name = "payslip")
 @Getter

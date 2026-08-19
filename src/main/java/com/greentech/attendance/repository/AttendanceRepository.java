@@ -16,7 +16,7 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     List<Attendance> findByEmployeeIdAndWorkDateBetweenOrderByWorkDateAsc(
             Long employeeId, LocalDate from, LocalDate to);
 
-    // NOTE: enum 리터럴을 JPQL 에 직접 쓰지 않고 파라미터로 전달
+    // NOTE: enum 리터럴은 JPQL 직접 사용 불가, 파라미터로 전달
     @Query("""
             select count(a) from Attendance a
             where a.employee.id = :employeeId

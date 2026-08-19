@@ -1,25 +1,5 @@
--- =============================================================================
--- greentech-was : 인사관리시스템 초기 스키마
---
--- 테이블 25개 고정
---   기준정보 4 : department, job_position, leave_type, pay_item
---   사원     7 : employee, employee_contact, employment_history, education,
---                certificate, family_member, attachment
---   근태     5 : work_calendar, attendance, leave_balance, leave_request,
---                overtime_request
---   급여     5 : salary_contract, deduction_rate, payroll_run, payslip,
---                payslip_detail
---   보안/공통 4 : app_user, app_role, user_role, audit_log
---
--- NOTE: `position`, `role` 은 MySQL 예약어 충돌 소지 있음
---       대체 명칭 `job_position`, `app_role` 사용
--- =============================================================================
-
--- -----------------------------------------------------------------------------
 -- MARK: 기준정보
--- -----------------------------------------------------------------------------
 
--- 부서
 CREATE TABLE department (
     id          BIGINT       NOT NULL AUTO_INCREMENT,
     code        VARCHAR(20)  NOT NULL COMMENT '부서코드',
@@ -37,7 +17,6 @@ CREATE TABLE department (
     CONSTRAINT fk_department_parent FOREIGN KEY (parent_id) REFERENCES department (id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '부서';
 
--- 직위
 CREATE TABLE job_position (
     id          BIGINT       NOT NULL AUTO_INCREMENT,
     code        VARCHAR(20)  NOT NULL COMMENT '직위코드',
@@ -52,7 +31,6 @@ CREATE TABLE job_position (
     UNIQUE KEY uk_job_position_code (code)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '직위';
 
--- 휴가 종류
 CREATE TABLE leave_type (
     id                 BIGINT       NOT NULL AUTO_INCREMENT,
     code               VARCHAR(20)  NOT NULL COMMENT '휴가코드',
@@ -69,7 +47,6 @@ CREATE TABLE leave_type (
     UNIQUE KEY uk_leave_type_code (code)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '휴가 종류';
 
--- 급여 항목
 CREATE TABLE pay_item (
     id          BIGINT      NOT NULL AUTO_INCREMENT,
     code        VARCHAR(30) NOT NULL COMMENT '항목코드',
@@ -86,11 +63,8 @@ CREATE TABLE pay_item (
     UNIQUE KEY uk_pay_item_code (code)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '급여 항목 마스터';
 
--- -----------------------------------------------------------------------------
 -- MARK: 사원
--- -----------------------------------------------------------------------------
 
--- 사원
 CREATE TABLE employee (
     id                BIGINT       NOT NULL AUTO_INCREMENT,
     emp_no            VARCHAR(20)  NOT NULL COMMENT '사번',
@@ -121,7 +95,6 @@ CREATE TABLE employee (
     CONSTRAINT fk_employee_manager FOREIGN KEY (manager_id) REFERENCES employee (id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '사원';
 
--- 사원 연락처 / 주소
 CREATE TABLE employee_contact (
     id                  BIGINT       NOT NULL AUTO_INCREMENT,
     employee_id         BIGINT       NOT NULL,
@@ -142,7 +115,6 @@ CREATE TABLE employee_contact (
     CONSTRAINT fk_employee_contact_employee FOREIGN KEY (employee_id) REFERENCES employee (id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '사원 연락처';
 
--- 발령 이력
 CREATE TABLE employment_history (
     id                   BIGINT       NOT NULL AUTO_INCREMENT,
     employee_id          BIGINT       NOT NULL,
@@ -162,7 +134,6 @@ CREATE TABLE employment_history (
     CONSTRAINT fk_employment_history_employee FOREIGN KEY (employee_id) REFERENCES employee (id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '발령 이력';
 
--- 학력
 CREATE TABLE education (
     id               BIGINT       NOT NULL AUTO_INCREMENT,
     employee_id      BIGINT       NOT NULL,
@@ -181,7 +152,6 @@ CREATE TABLE education (
     CONSTRAINT fk_education_employee FOREIGN KEY (employee_id) REFERENCES employee (id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '학력';
 
--- 자격증
 CREATE TABLE certificate (
     id             BIGINT       NOT NULL AUTO_INCREMENT,
     employee_id    BIGINT       NOT NULL,
@@ -199,7 +169,6 @@ CREATE TABLE certificate (
     CONSTRAINT fk_certificate_employee FOREIGN KEY (employee_id) REFERENCES employee (id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '자격증';
 
--- 가족사항
 CREATE TABLE family_member (
     id          BIGINT      NOT NULL AUTO_INCREMENT,
     employee_id BIGINT      NOT NULL,
@@ -217,8 +186,7 @@ CREATE TABLE family_member (
     CONSTRAINT fk_family_member_employee FOREIGN KEY (employee_id) REFERENCES employee (id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '가족사항';
 
--- 첨부파일 - 사원증명서·자격증 스캔본·사진
--- NOTE: owner_type + owner_id 다형 참조 - FK 제약 미설정
+-- NOTE: owner_type 과 owner_id 로 다형 참조하므로 FK 제약 없음
 CREATE TABLE attachment (
     id             BIGINT       NOT NULL AUTO_INCREMENT,
     owner_type     VARCHAR(30)  NOT NULL COMMENT 'EMPLOYEE / CERTIFICATE / LEAVE_REQUEST / PAYSLIP',
@@ -237,11 +205,8 @@ CREATE TABLE attachment (
     KEY ix_attachment_owner (owner_type, owner_id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '첨부파일';
 
--- -----------------------------------------------------------------------------
 -- MARK: 근태
--- -----------------------------------------------------------------------------
 
--- 근무 달력
 CREATE TABLE work_calendar (
     id             BIGINT      NOT NULL AUTO_INCREMENT,
     calendar_date  DATE        NOT NULL,
@@ -255,7 +220,6 @@ CREATE TABLE work_calendar (
     UNIQUE KEY uk_work_calendar_date (calendar_date)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '근무 달력';
 
--- 일별 출퇴근
 CREATE TABLE attendance (
     id                BIGINT      NOT NULL AUTO_INCREMENT,
     employee_id       BIGINT      NOT NULL,
@@ -277,7 +241,6 @@ CREATE TABLE attendance (
     CONSTRAINT fk_attendance_employee FOREIGN KEY (employee_id) REFERENCES employee (id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '일별 출퇴근';
 
--- 연차/휴가 잔여
 CREATE TABLE leave_balance (
     id             BIGINT        NOT NULL AUTO_INCREMENT,
     employee_id    BIGINT        NOT NULL,
@@ -296,7 +259,6 @@ CREATE TABLE leave_balance (
     CONSTRAINT fk_leave_balance_type FOREIGN KEY (leave_type_id) REFERENCES leave_type (id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '휴가 잔여';
 
--- 휴가 신청
 CREATE TABLE leave_request (
     id             BIGINT        NOT NULL AUTO_INCREMENT,
     employee_id    BIGINT        NOT NULL,
@@ -322,7 +284,6 @@ CREATE TABLE leave_request (
     CONSTRAINT fk_leave_request_approver FOREIGN KEY (approver_id) REFERENCES employee (id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '휴가 신청';
 
--- 연장근무 신청
 CREATE TABLE overtime_request (
     id            BIGINT       NOT NULL AUTO_INCREMENT,
     employee_id   BIGINT       NOT NULL,
@@ -346,11 +307,8 @@ CREATE TABLE overtime_request (
     CONSTRAINT fk_overtime_request_approver FOREIGN KEY (approver_id) REFERENCES employee (id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '연장근무 신청';
 
--- -----------------------------------------------------------------------------
 -- MARK: 급여
--- -----------------------------------------------------------------------------
 
--- 연봉계약
 CREATE TABLE salary_contract (
     id              BIGINT         NOT NULL AUTO_INCREMENT,
     employee_id     BIGINT         NOT NULL,
@@ -369,7 +327,6 @@ CREATE TABLE salary_contract (
     CONSTRAINT fk_salary_contract_employee FOREIGN KEY (employee_id) REFERENCES employee (id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '연봉계약';
 
--- 공제 요율 (4대보험 / 세율)
 CREATE TABLE deduction_rate (
     id              BIGINT        NOT NULL AUTO_INCREMENT,
     year            INT           NOT NULL,
@@ -385,7 +342,6 @@ CREATE TABLE deduction_rate (
     UNIQUE KEY uk_deduction_rate (year, item_code)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '공제 요율';
 
--- 급여 정산 실행 (월말 배치 1건 = 1 row)
 CREATE TABLE payroll_run (
     id               BIGINT         NOT NULL AUTO_INCREMENT,
     pay_year_month   VARCHAR(7)     NOT NULL COMMENT 'YYYY-MM',
@@ -406,7 +362,6 @@ CREATE TABLE payroll_run (
     UNIQUE KEY uk_payroll_run_year_month (pay_year_month)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '급여 정산 실행';
 
--- 급여 명세서
 CREATE TABLE payslip (
     id                BIGINT         NOT NULL AUTO_INCREMENT,
     payroll_run_id    BIGINT         NOT NULL,
@@ -431,7 +386,6 @@ CREATE TABLE payslip (
     CONSTRAINT fk_payslip_employee FOREIGN KEY (employee_id) REFERENCES employee (id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '급여 명세서';
 
--- 급여 명세서 상세
 CREATE TABLE payslip_detail (
     id           BIGINT         NOT NULL AUTO_INCREMENT,
     payslip_id   BIGINT         NOT NULL,
@@ -451,11 +405,8 @@ CREATE TABLE payslip_detail (
     CONSTRAINT fk_payslip_detail_item FOREIGN KEY (pay_item_id) REFERENCES pay_item (id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '급여 명세서 상세';
 
--- -----------------------------------------------------------------------------
--- MARK: 보안 / 공통
--- -----------------------------------------------------------------------------
+-- MARK: 보안, 공통
 
--- 로그인 계정
 CREATE TABLE app_user (
     id                   BIGINT       NOT NULL AUTO_INCREMENT,
     username             VARCHAR(50)  NOT NULL,
@@ -476,7 +427,6 @@ CREATE TABLE app_user (
     CONSTRAINT fk_app_user_employee FOREIGN KEY (employee_id) REFERENCES employee (id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '로그인 계정';
 
--- 권한
 CREATE TABLE app_role (
     id          BIGINT       NOT NULL AUTO_INCREMENT,
     code        VARCHAR(30)  NOT NULL COMMENT 'ROLE_ADMIN / ROLE_HR / ROLE_MANAGER / ROLE_EMPLOYEE',
@@ -490,7 +440,6 @@ CREATE TABLE app_role (
     UNIQUE KEY uk_app_role_code (code)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '권한';
 
--- 계정-권한 매핑
 CREATE TABLE user_role (
     user_id BIGINT NOT NULL,
     role_id BIGINT NOT NULL,
@@ -500,7 +449,6 @@ CREATE TABLE user_role (
     CONSTRAINT fk_user_role_role FOREIGN KEY (role_id) REFERENCES app_role (id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '계정-권한 매핑';
 
--- 감사 로그
 CREATE TABLE audit_log (
     id          BIGINT       NOT NULL AUTO_INCREMENT,
     actor       VARCHAR(50)  NULL COMMENT '수행자 username',

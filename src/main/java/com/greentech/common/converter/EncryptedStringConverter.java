@@ -12,12 +12,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
- * 민감 컬럼 AES-GCM 암복호화 컨버터
- *
  * 저장 형식: Base64(IV 12B + ciphertext + tag)
  *
- * NOTE: Hibernate 가 Spring 빈 컨테이너 사용 - 컨버터도 빈 주입 대상
- * FIXME: 키 교체 시 기존 데이터 복호화 불가 - 재암호화 마이그레이션 절차 필요
+ * FIXME: 키 교체 시 기존 데이터 복호화 불가. 재암호화 절차 필요
  */
 @Component
 @Converter

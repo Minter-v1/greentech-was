@@ -19,11 +19,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-/**
- * 월별 급여 정산 실행 단위 - pay_year_month 유니크로 월 1건
- *
- * NOTE: 재계산은 동일 행 갱신 - CONFIRMED 이후 잠금
- */
+/** 월별 급여 정산 실행 단위. CONFIRMED 이후 잠금 */
 @Entity
 @Table(name = "payroll_run")
 @Getter

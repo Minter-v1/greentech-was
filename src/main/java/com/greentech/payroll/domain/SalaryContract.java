@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-/** 연봉계약. effective_to 가 NULL 인 행이 현재 유효 계약 */
+/** 연봉계약. effective_to 가 NULL 이면 현재 유효 */
 @Entity
 @Table(name = "salary_contract")
 @Getter

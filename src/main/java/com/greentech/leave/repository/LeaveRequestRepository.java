@@ -23,7 +23,6 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
     @EntityGraph(attributePaths = {"employee", "leaveType"})
     Page<LeaveRequest> findAllByOrderByIdDesc(Pageable pageable);
 
-    // NOTE: 같은 사원의 기간 중복 신청 차단용 - 반려·취소 건은 중복 판정 제외
     @Query("""
             select count(r) from LeaveRequest r
             where r.employee.id = :employeeId

@@ -3,7 +3,7 @@ package com.greentech.common.exception;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
-/** 업무 예외 코드. HTTP 상태·기본 메시지 일원화 */
+/** 업무 예외 코드 */
 @Getter
 public enum ErrorCode {
 
@@ -13,7 +13,7 @@ public enum ErrorCode {
     CONFLICT(HttpStatus.CONFLICT, "이미 존재하거나 현재 상태와 충돌합니다"),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 처리 중 오류가 발생했습니다"),
 
-    // MARK: 인증·인가
+    // MARK: 인증, 인가
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "인증이 필요합니다"),
     BAD_CREDENTIALS(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 올바르지 않습니다"),
     ACCOUNT_DISABLED(HttpStatus.FORBIDDEN, "사용할 수 없는 계정입니다"),

@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-/** 연도별 휴가 부여·사용 잔여. (employee, leaveType, year) 유니크 */
+/** 연도별 휴가 잔여. (employee, leaveType, year) 유니크 */
 @Entity
 @Table(name = "leave_balance")
 @Getter
@@ -55,7 +55,7 @@ public class LeaveBalance extends BaseEntity {
     @Column(name = "expires_on")
     private LocalDate expiresOn;
 
-    /** 잔여일수 비저장. 부여-사용 계산으로 불일치 방지 */
+    /** 잔여일수는 저장하지 않고 계산 */
     public BigDecimal getRemainingDays() {
         return grantedDays.subtract(usedDays);
     }

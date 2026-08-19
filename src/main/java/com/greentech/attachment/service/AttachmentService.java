@@ -26,12 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-/**
- * 첨부파일 저장 및 조회
- *
- * NOTE: 바이너리는 파일시스템, 메타데이터만 DB 보관
- * NOTE: 저장 경로는 yyyy/MM/dd 로 분산해 단일 디렉터리 파일 수 증가 방지
- */
+/** 첨부파일 저장 및 조회 */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -50,13 +45,7 @@ public class AttachmentService {
                 .toList();
     }
 
-    /**
-     * 첨부파일 열람 권한 검증
-     *
-     * NOTE: 식별자만 알면 타인의 증명서·스캔본이 노출되므로 소유자 확인 필요
-     * TODO: CERTIFICATE 등 사원 외 소유 타입은 현재 인사담당자만 열람 가능
-     *       본인 자격증 스캔본 열람이 필요해지면 owner 를 사원까지 역추적하는 규칙 추가
-     */
+    // TODO: 사원 외 소유 타입은 인사담당자만 열람 가능
     private void ensureReadable(Attachment.OwnerType ownerType, Long ownerId) {
         if (SecurityUtils.hasRole(AppRole.ADMIN) || SecurityUtils.hasRole(AppRole.HR)) {
             return;
@@ -130,7 +119,7 @@ public class AttachmentService {
         Attachment attachment = attachmentRepository.findById(attachmentId)
                 .orElseThrow(() -> BusinessException.notFound(ErrorCode.ATTACHMENT_NOT_FOUND, attachmentId));
 
-        // NOTE: 메타데이터 삭제 우선 - 실물 삭제 실패가 트랜잭션을 되돌리지 않도록 분리
+        // NOTE: 실물 삭제 실패가 트랜잭션을 되돌리지 않도록 분리
         attachmentRepository.delete(attachment);
 
         try {
@@ -145,7 +134,7 @@ public class AttachmentService {
     private Path resolve(String relativePath) {
         Path root = Path.of(storageProperties.root()).toAbsolutePath().normalize();
         Path resolved = root.resolve(relativePath).normalize();
-        // NOTE: 경로 조작으로 루트 밖을 참조하는 요청 차단
+        // NOTE: 경로 조작 차단
         if (!resolved.startsWith(root)) {
             throw new BusinessException(ErrorCode.FILE_STORAGE_ERROR, "허용되지 않은 저장 경로입니다");
         }

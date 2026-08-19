@@ -13,11 +13,7 @@ import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-/**
- * 업무 테이블 공통 감사 컬럼
- *
- * NOTE: 값 주입은 JPA Auditing - 수행자는 AuditorAware 가 SecurityContext 에서 조회
- */
+/** 업무 테이블 공통 감사 컬럼 */
 @Getter
 @MappedSuperclass
 @SuperBuilder

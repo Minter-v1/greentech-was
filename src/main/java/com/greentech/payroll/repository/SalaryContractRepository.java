@@ -12,7 +12,6 @@ public interface SalaryContractRepository extends JpaRepository<SalaryContract, 
 
     List<SalaryContract> findByEmployeeIdOrderByEffectiveFromDesc(Long employeeId);
 
-    // NOTE: 기준일에 유효한 계약 1건 - effective_to 가 NULL 이면 무기한 유효
     @Query("""
             select c from SalaryContract c
             where c.employee.id = :employeeId

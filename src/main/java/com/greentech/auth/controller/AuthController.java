@@ -46,7 +46,6 @@ public class AuthController {
         return ApiResult.ok(authService.me(SecurityUtils.currentUsername()));
     }
 
-    // NOTE: 리버스 프록시 뒤 구성 고려 - X-Forwarded-For 우선 사용
     private String resolveClientIp(HttpServletRequest request) {
         String forwarded = request.getHeader(HEADER_FORWARDED_FOR);
         if (forwarded != null && !forwarded.isBlank()) {

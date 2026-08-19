@@ -16,11 +16,7 @@ import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-/**
- * 감사 로그 - 로그인·급여정산 확정 등 추적 대상 행위 기록
- *
- * NOTE: append-only - 수정 없으므로 BaseEntity 대신 created_at 만 보유
- */
+/** 감사 로그. append-only 라 created_at 만 보유 */
 @Entity
 @Table(name = "audit_log")
 @Getter
@@ -47,7 +43,7 @@ public class AuditLog {
     @Column(name = "target_id", length = 50)
     private String targetId;
 
-    // NOTE: MySQL TEXT 대응 - @Lob 사용 시 tinytext 로 검증 실패
+    // NOTE: @Lob 사용 시 tinytext 로 매핑되어 스키마 검증 실패
     @Column(length = 65535)
     private String detail;
 

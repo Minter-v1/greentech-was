@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-/** 가족사항. 부양가족 여부는 연말정산 입력값 */
+/** 가족사항 */
 @Entity
 @Table(name = "family_member")
 @Getter

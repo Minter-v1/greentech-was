@@ -5,12 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * 전체 API 공통 응답 형식
- *
- * NOTE: 성공·실패 모두 동일 구조 사용 - 클라이언트의 분기 처리 단순화 목적
- * NOTE: null 필드는 직렬화 제외 - 성공 응답에 오류 전용 필드 미노출
- */
+/** 전체 API 공통 응답 형식. 성공과 실패 모두 동일 구조 */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "공통 응답 형식")
 public record ApiResult<T>(

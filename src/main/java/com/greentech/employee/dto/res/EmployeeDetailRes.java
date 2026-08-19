@@ -57,11 +57,7 @@ public record EmployeeDetailRes(
         @Schema(description = "퇴사일")
         LocalDate resignDate) {
 
-    /**
-     * 사원 상세 변환
-     *
-     * NOTE: 주민등록번호는 복호화 값이 아닌 마스킹 값만 노출
-     */
+    /** 주민등록번호는 마스킹 값만 노출 */
     public static EmployeeDetailRes from(Employee entity) {
         return new EmployeeDetailRes(
                 entity.getId(),

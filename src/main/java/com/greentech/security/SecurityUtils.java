@@ -20,11 +20,7 @@ public final class SecurityUtils {
         return authentication.getName();
     }
 
-    /**
-     * 현재 로그인 계정에 연결된 사원 ID
-     *
-     * NOTE: 사원 미연결 계정의 본인 대상 API 호출 시 명시적 오류 반환
-     */
+    /** 현재 로그인 계정에 연결된 사원 ID */
     public static Long currentEmployeeId() {
         Long employeeId = currentEmployeeIdOrNull();
         if (employeeId == null) {

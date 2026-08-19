@@ -16,11 +16,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-/**
- * 근무 달력 - 날짜만으로 판별 불가한 공휴일 등만 등록
- *
- * NOTE: 토·일요일은 행 없이 DayType.WEEKEND 로 계산
- */
+/** 근무 달력. 공휴일만 등록하고 주말은 요일로 계산 */
 @Entity
 @Table(name = "work_calendar")
 @Getter

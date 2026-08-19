@@ -3,12 +3,7 @@ package com.greentech.payroll.service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-/**
- * 급여 산정 규칙
- *
- * FIXME: 아래 값은 계산 로직 검증용 기본값
- *        실제 운영 적용 전 취업규칙·근로계약 기준으로 재정의 필요
- */
+// FIXME: 검증용 기본값. 운영 적용 전 취업규칙 기준으로 재정의
 public final class PayrollPolicy {
 
     /** 월 소정근로시간 - 통상시급 산출 기준 */
@@ -37,11 +32,7 @@ public final class PayrollPolicy {
         return basePay.divide(MONTHLY_WORK_HOURS, 2, RoundingMode.HALF_UP);
     }
 
-    /**
-     * 직책수당
-     *
-     * NOTE: 직위 서열 기준 정액 지급
-     */
+    /** 직책수당. 직위 서열 기준 정액 */
     public static BigDecimal positionAllowance(Integer positionLevel) {
         if (positionLevel == null) {
             return BigDecimal.ZERO;

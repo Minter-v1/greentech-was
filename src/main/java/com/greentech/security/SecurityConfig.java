@@ -33,19 +33,14 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-/**
- * 무상태 JWT 보안 설정
- *
- * NOTE: 발급은 JwtService, 검증은 oauth2-resource-server 담당
- * NOTE: 단일 서비스·외부 인가 서버 부재로 대칭키 HS256 채택
- */
+/** 무상태 JWT 보안 설정 */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 @EnableConfigurationProperties(SecurityProperties.class)
 public class SecurityConfig {
 
-    /** 인증 예외 경로. Swagger 문서는 사내망 전제로 공개 */
+    /** 인증 예외 경로 */
     private static final String[] PUBLIC_PATHS = {
             "/api/v1/auth/login",
             "/v3/api-docs",
@@ -117,7 +112,7 @@ public class SecurityConfig {
                 .build();
     }
 
-    /** roles 클레임을 권한으로 직접 사용. 값에 ROLE_ 접두사 포함이라 prefix 미지정 */
+    /** roles 클레임에 ROLE_ 접두사 포함이라 prefix 미지정 */
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();
@@ -133,7 +128,6 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         // TODO: 프론트엔드 도메인 확정 시 setAllowedOrigins 로 축소
-        // NOTE: 현재 사내망 사용 전제
         configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));

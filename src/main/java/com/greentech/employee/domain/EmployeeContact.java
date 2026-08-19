@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-/** 사원 연락처·주소·비상연락처. 사원당 1건 */
+/** 사원 연락처. 사원당 1건 */
 @Entity
 @Table(name = "employee_contact")
 @Getter

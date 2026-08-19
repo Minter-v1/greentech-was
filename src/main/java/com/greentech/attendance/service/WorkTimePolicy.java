@@ -4,13 +4,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
-/**
- * 근무시간 산정 규칙
- *
- * NOTE: 표준 근무 09:00~18:00, 휴게 12:00~13:00, 1일 정규 8시간 기준
- * NOTE: 야간은 22:00~06:00 구간
- * TODO: 교대 근무조 도입 시 사원별 근무제도(work_schedule) 기준으로 대체 필요
- */
+// TODO: 교대 근무조 도입 시 사원별 근무제도 기준으로 대체
 public final class WorkTimePolicy {
 
     public static final LocalTime WORK_START = LocalTime.of(9, 0);

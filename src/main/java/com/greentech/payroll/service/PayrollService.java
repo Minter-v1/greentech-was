@@ -45,12 +45,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * 월별 급여 정산
- *
- * NOTE: 월말 정산 대상 약 80명 규모 - 단건 트랜잭션으로 처리
- * TODO: 대상 인원이 수천 명대로 늘어나면 Spring Batch 로 청크 처리 전환 필요
- */
+// TODO: 대상이 수천 명대가 되면 Spring Batch 청크 처리로 전환
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -88,11 +83,7 @@ public class PayrollService {
                 .toList();
     }
 
-    /**
-     * 급여 명세서 상세 조회
-     *
-     * NOTE: 식별자만 알면 타인 명세서가 노출되므로 소유자 검증 필수
-     */
+    /** 급여 명세서 상세 조회. 소유자 검증 필수 */
     @Transactional(readOnly = true)
     public PayslipRes findPayslip(Long payslipId) {
         Payslip payslip = payslipRepository.findWithDetailsById(payslipId)
@@ -118,12 +109,7 @@ public class PayrollService {
                 .toList();
     }
 
-    /**
-     * 급여 정산 실행
-     *
-     * NOTE: 같은 정산월 재실행 시 기존 명세서를 삭제하고 다시 계산
-     * NOTE: 확정(CONFIRMED) 상태는 재계산 차단
-     */
+    /** 급여 정산 실행. 재실행 시 기존 명세서 대체, 확정 건은 차단 */
     @Transactional
     public PayrollRunRes calculate(PayrollCalculateReq request, String executor) {
         YearMonth yearMonth = parseYearMonth(request.payYearMonth());
@@ -140,7 +126,7 @@ public class PayrollService {
             throw new BusinessException(ErrorCode.PAYROLL_ALREADY_CONFIRMED);
         }
 
-        // NOTE: 엔티티 단위 삭제로 payslip_detail 까지 cascade 제거
+        // NOTE: 벌크 삭제는 cascade 미동작, 엔티티 단위 삭제 필요
         payslipRepository.deleteAll(payslipRepository.findByPayrollRunIdOrderByEmpNoAsc(run.getId()));
         payslipRepository.flush();
 
@@ -288,12 +274,7 @@ public class PayrollService {
         return payslip;
     }
 
-    /**
-     * 공제 적용
-     *
-     * NOTE: 장기요양보험은 급여가 아닌 건강보험료액 기준
-     * NOTE: 지방소득세는 소득세액 기준
-     */
+    /** 공제 적용. 장기요양은 건강보험료액, 지방소득세는 소득세액 기준 */
     private BigDecimal applyDeductions(
             Payslip payslip,
             Map<String, PayItem> payItems,

@@ -95,7 +95,6 @@ public class AuthService {
                 roles);
     }
 
-    // NOTE: 실패 카운트는 계정 존재 시에만 증가 - 미존재 계정은 감사 로그만 기록
     private void recordFailure(String username, String clientIp) {
         appUserRepository.findByUsername(username).ifPresent(AppUser::recordFailedLogin);
         auditLogRepository.save(AuditLog.builder()

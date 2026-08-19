@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-/** 자격증. 스캔본은 attachment(owner_type=CERTIFICATE) 로 연결 */
+/** 자격증. 스캔본은 attachment 로 연결 */
 @Entity
 @Table(name = "certificate")
 @Getter

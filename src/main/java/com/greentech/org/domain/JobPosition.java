@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-/** 직위. 테이블명은 MySQL 예약어 회피용 job_position */
+/** 직위. 테이블명은 예약어 회피용 job_position */
 @Entity
 @Table(name = "job_position")
 @Getter

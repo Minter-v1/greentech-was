@@ -5,11 +5,7 @@ import java.util.List;
 import java.util.function.Function;
 import org.springframework.data.domain.Page;
 
-/**
- * 페이지 응답 본문
- *
- * NOTE: Page 직접 노출 시 버전별 직렬화 구조 변동 - 래핑으로 고정
- */
+// NOTE: Page 직접 노출 시 버전별로 직렬화 구조가 달라져 래핑
 @Schema(description = "페이지 응답")
 public record PageResult<T>(
         @Schema(description = "현재 페이지 내용")

@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-/** 권한. code 는 Spring Security 규약에 따라 ROLE_ 접두사 사용 */
+/** 권한. code 는 ROLE_ 접두사 사용 */
 @Entity
 @Table(name = "app_role")
 @Getter

@@ -39,7 +39,7 @@ public class LeaveService {
 
     private static final BigDecimal HALF_DAY = new BigDecimal("0.5");
 
-    // NOTE: 중복 판정 대상 - 반려·취소 건은 기간이 겹쳐도 무시
+    // NOTE: 반려, 취소 건은 기간이 겹쳐도 중복 아님
     private static final List<ApprovalStatus> BLOCKING_STATUSES =
             List.of(ApprovalStatus.REQUESTED, ApprovalStatus.APPROVED);
 
@@ -77,11 +77,7 @@ public class LeaveService {
         return PageResult.of(page, LeaveRequestRes::from);
     }
 
-    /**
-     * 휴가 신청
-     *
-     * NOTE: 신청 시점에 잔여를 차감하지 않고 승인 시점에 차감
-     */
+    /** 휴가 신청. 잔여 차감은 승인 시점 */
     @Transactional
     public LeaveRequestRes create(Long employeeId, LeaveRequestCreateReq request) {
         if (request.startDate().isAfter(request.endDate())) {
@@ -151,11 +147,7 @@ public class LeaveService {
         return LeaveRequestRes.from(request);
     }
 
-    /**
-     * 휴가 취소
-     *
-     * NOTE: 승인 상태에서 취소하면 차감된 잔여를 되돌림
-     */
+    /** 휴가 취소. 승인 상태면 차감된 잔여 복구 */
     @Transactional
     public LeaveRequestRes cancel(Long requestId, Long employeeId) {
         LeaveRequest request = getRequestOrThrow(requestId);
@@ -210,11 +202,7 @@ public class LeaveService {
                         "%d년 %s 부여 내역이 없습니다".formatted(year, request.getLeaveType().getName())));
     }
 
-    /**
-     * 신청 기간의 근무일 수 계산
-     *
-     * NOTE: 달력 등록분 우선, 미등록 날짜는 요일로 판정
-     */
+    /** 신청 기간의 근무일 수. 달력 등록분 우선, 미등록은 요일 기준 */
     private long countWorkdays(LocalDate start, LocalDate end) {
         Map<LocalDate, WorkCalendar.DayType> registered =
                 workCalendarRepository.findByCalendarDateBetweenOrderByCalendarDateAsc(start, end).stream()

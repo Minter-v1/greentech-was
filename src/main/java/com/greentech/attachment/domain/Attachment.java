@@ -16,12 +16,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-/**
- * 첨부파일 메타데이터 - 바이너리는 스토리지 보관, DB 는 경로만 유지
- *
- * NOTE: 증명서·자격증 스캔본·사진 약 40GB 규모 - DB 저장 대상 아님
- * NOTE: owner_type + owner_id 다형 참조 - FK 제약 미설정
- */
+// NOTE: owner_type 과 owner_id 로 다형 참조하므로 FK 제약 없음
 @Entity
 @Table(name = "attachment")
 @Getter
@@ -58,7 +53,7 @@ public class Attachment extends BaseEntity {
     @Builder.Default
     private long fileSize = 0L;
 
-    /** SHA-256. 중복 업로드 판별·무결성 확인용 */
+    /** SHA-256 */
     @Column(length = 64)
     private String checksum;
 

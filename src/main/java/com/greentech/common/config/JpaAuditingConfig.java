@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-/** created_by·updated_by 를 현재 로그인 사용자로 주입 */
+/** created_by, updated_by 주입 */
 @Configuration
 @EnableJpaAuditing(auditorAwareRef = "auditorAware")
 public class JpaAuditingConfig {
@@ -23,7 +23,6 @@ public class JpaAuditingConfig {
                 return Optional.of(SYSTEM);
             }
             String name = authentication.getName();
-            // NOTE: 미인증 요청의 principal 은 anonymousUser
             if (name == null || name.isBlank() || "anonymousUser".equals(name)) {
                 return Optional.of(SYSTEM);
             }

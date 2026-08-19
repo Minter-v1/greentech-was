@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-/** 발령 이력. 입사·승진·부서이동·휴복직·퇴사 */
+/** 발령 이력 */
 @Entity
 @Table(name = "employment_history")
 @Getter

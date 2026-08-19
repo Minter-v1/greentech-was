@@ -23,7 +23,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-/** 연장근무 신청. 승인 건만 급여 정산 수당 반영 */
+/** 연장근무 신청 */
 @Entity
 @Table(name = "overtime_request")
 @Getter
@@ -83,7 +83,7 @@ public class OvertimeRequest extends BaseEntity {
         this.approvedAt = at;
     }
 
-    /** 연장·야간·휴일 구분. 가산 배율 상이 */
+    /** 가산 배율이 다른 근무 구분 */
     public enum OvertimeType {
         EXTENDED, NIGHT, HOLIDAY
     }

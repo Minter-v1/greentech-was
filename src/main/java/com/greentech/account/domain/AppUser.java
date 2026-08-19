@@ -23,11 +23,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-/**
- * 로그인 계정 - user_role 조인 테이블로 권한 다대다 연결
- *
- * NOTE: user_role 은 별도 엔티티 없이 조인 테이블로만 매핑
- */
+/** 로그인 계정. user_role 은 조인 테이블로만 매핑 */
 @Entity
 @Table(name = "app_user")
 @Getter

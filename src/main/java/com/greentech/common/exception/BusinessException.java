@@ -2,7 +2,7 @@ package com.greentech.common.exception;
 
 import lombok.Getter;
 
-/** 업무 규칙 위반. GlobalExceptionHandler 에서 ErrorCode 의 HTTP 상태로 변환 */
+/** 업무 규칙 위반 */
 @Getter
 public class BusinessException extends RuntimeException {
 

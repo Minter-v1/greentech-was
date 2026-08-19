@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-/** 휴가 종류. 연차·병가·경조사 등 */
+/** 휴가 종류 */
 @Entity
 @Table(name = "leave_type")
 @Getter
@@ -34,7 +34,7 @@ public class LeaveType extends BaseEntity {
     @Column(nullable = false, length = 50)
     private String name;
 
-    /** 유급 여부. 무급 휴가는 급여 일할 공제 대상 */
+    /** 유급 여부 */
     @Column(nullable = false)
     @Builder.Default
     private boolean paid = true;
