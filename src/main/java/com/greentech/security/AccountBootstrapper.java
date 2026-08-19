@@ -4,11 +4,8 @@ import com.greentech.account.domain.AppRole;
 import com.greentech.account.domain.AppUser;
 import com.greentech.account.repository.AppRoleRepository;
 import com.greentech.account.repository.AppUserRepository;
-import com.greentech.employee.domain.Employee;
-import com.greentech.employee.repository.EmployeeRepository;
 import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,15 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * 초기 로그인 계정 생성
- *
- * NOTE: BCrypt 해시를 시드 SQL 에 하드코딩하지 않기 위해 기동 시점에 생성
- * NOTE: 멱등 동작 - 이미 존재하는 username 은 건너뜀
- * NOTE: 볼륨 삭제로 DB 가 비어도 기동할 때마다 관리자 계정이 다시 만들어진다
- *       마이그레이션 INSERT 와 달리 계정을 실수로 지운 경우에도 복구된다
- * FIXME: 운영 배포 시 admin 비밀번호는 최초 로그인 후 반드시 변경 필요
- */
+/** 관리자 계정 생성. 없으면 생성, 있으면 유지 */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -34,7 +23,6 @@ public class AccountBootstrapper implements ApplicationRunner {
 
     private final AppUserRepository appUserRepository;
     private final AppRoleRepository appRoleRepository;
-    private final EmployeeRepository employeeRepository;
     private final PasswordEncoder passwordEncoder;
     private final SecurityProperties properties;
 
@@ -42,49 +30,36 @@ public class AccountBootstrapper implements ApplicationRunner {
     @Transactional
     public void run(ApplicationArguments args) {
         SecurityProperties.Admin admin = properties.admin();
-        createIfAbsent(admin.username(), admin.password(), null, List.of(AppRole.ADMIN));
 
-        // NOTE: 데모·검증용 계정. 운영 반영 시 제거 대상
-        String demoPassword = properties.bootstrapPassword();
-        createIfAbsent("hr01", demoPassword, "20190201", List.of(AppRole.HR, AppRole.EMPLOYEE));
-        createIfAbsent("mgr01", demoPassword, "20210401", List.of(AppRole.MANAGER, AppRole.EMPLOYEE));
-        createIfAbsent("emp01", demoPassword, "20220501", List.of(AppRole.EMPLOYEE));
-    }
-
-    private void createIfAbsent(
-            String username, String rawPassword, String empNo, List<String> roleCodes) {
-        if (appUserRepository.existsByUsername(username)) {
+        // NOTE: 계정이 있으면 비밀번호를 덮지 않는다. 앱에서 바꾼 값이 재기동마다 되돌아가기 때문
+        //       설정값으로 강제 초기화하려면 reset-password-on-start 를 켠다
+        var existing = appUserRepository.findByUsername(admin.username());
+        if (existing.isPresent()) {
+            if (Boolean.TRUE.equals(admin.resetPasswordOnStart())) {
+                AppUser user = existing.get();
+                user.setPasswordHash(passwordEncoder.encode(admin.password()));
+                user.setPasswordChangedAt(LocalDateTime.now());
+                log.warn("관리자 비밀번호를 설정값으로 초기화: username={}", admin.username());
+            }
             return;
         }
 
         Set<AppRole> roles = new LinkedHashSet<>();
-        for (String code : roleCodes) {
-            appRoleRepository.findByCode(code).ifPresent(roles::add);
-        }
+        appRoleRepository.findByCode(AppRole.ADMIN).ifPresent(roles::add);
         if (roles.isEmpty()) {
-            log.warn("권한 미존재로 계정 생성 생략: username={}, roles={}", username, roleCodes);
+            log.warn("ROLE_ADMIN 미존재로 관리자 계정 생성 생략");
             return;
         }
 
-        Employee employee = null;
-        if (empNo != null) {
-            employee = employeeRepository.findByEmpNo(empNo).orElse(null);
-            if (employee == null) {
-                log.warn("사원 미존재로 계정-사원 연결 생략: username={}, empNo={}", username, empNo);
-            }
-        }
-
-        AppUser user = AppUser.builder()
-                .username(username)
-                .passwordHash(passwordEncoder.encode(rawPassword))
-                .employee(employee)
+        appUserRepository.save(AppUser.builder()
+                .username(admin.username())
+                .passwordHash(passwordEncoder.encode(admin.password()))
                 .enabled(true)
                 .locked(false)
                 .passwordChangedAt(LocalDateTime.now())
                 .roles(roles)
-                .build();
+                .build());
 
-        appUserRepository.save(user);
-        log.info("초기 계정 생성: username={}, roles={}, empNo={}", username, roleCodes, empNo);
+        log.info("관리자 계정 생성: username={}", admin.username());
     }
 }

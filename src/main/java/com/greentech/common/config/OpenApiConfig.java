@@ -10,7 +10,7 @@ import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/** Swagger UI 문서 정의. Authorize 버튼에 JWT 입력 후 호출 가능 */
+/** Swagger UI 문서 정의 */
 @Configuration
 public class OpenApiConfig {
 
@@ -28,7 +28,6 @@ public class OpenApiConfig {
                                 인증 절차: `POST /api/v1/auth/login` 으로 accessToken 발급 후
                                 우측 상단 Authorize 에 토큰 입력. Bearer 접두사 불필요.
 
-                                초기 계정은 애플리케이션 기동 시 `app.security.bootstrap-password` 값으로 생성.
                                 """)
                         .contact(new Contact().name("greentech 정보시스템팀")))
                 .addServersItem(new Server().url("/").description("현재 서버"))

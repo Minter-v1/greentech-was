@@ -5,11 +5,9 @@ spring:
   datasource:
     url: ${DB_URL:jdbc:mysql://localhost:3306/greentech_hr?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
     username: ${DB_USERNAME:greentech}
-    # NOTE: 기본값 미지정 - 미주입 시 기동 실패로 자격증명 하드코딩 방지
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
-      # NOTE: 월말 정산 피크 동시접속 40명 기준 - 커넥션 20개면 충분
       maximum-pool-size: ${DB_POOL_SIZE:20}
       minimum-idle: 5
       connection-timeout: 10000
@@ -17,7 +15,7 @@ spring:
 
   jpa:
     hibernate:
-      # NOTE: 스키마 형상은 Flyway 가 소유 - Hibernate 는 검증만 수행
+      # NOTE: 스키마는 Flyway 소유, Hibernate 는 검증만
       ddl-auto: validate
     open-in-view: false
     properties:
@@ -32,7 +30,6 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
-    # NOTE: 기존 운영 DB 편입 시 baseline 후 이후 버전만 적용
     baseline-on-migrate: true
     baseline-version: 0
 
@@ -74,21 +71,15 @@ springdoc:
 
 app:
   security:
-    # NOTE: 시크릿에는 기본값을 두지 않는다
-    #       기본값을 두면 그 값이 곧 저장소에 커밋되는 자격증명이 되고,
-    #       미주입 상태로 운영에 올라가도 알아채지 못한다
-    #       미설정 시 placeholder 해석 실패로 기동 단계에서 즉시 중단된다
+    # NOTE: 시크릿 기본값 금지. 미설정 시 기동 실패로 유도
     jwt-secret: ${JWT_SECRET}
     access-token-ttl: ${ACCESS_TOKEN_TTL:8h}
     field-encryption-key: ${FIELD_ENCRYPTION_KEY}
-    bootstrap-password: ${BOOTSTRAP_PASSWORD}
-    # NOTE: 관리자 계정은 기동할 때마다 없으면 생성된다
-    #       볼륨을 삭제해도 이 값으로 다시 만들어진다
     admin:
       username: ${ADMIN_USERNAME}
       password: ${ADMIN_PASSWORD}
+      reset-password-on-start: ${ADMIN_RESET_PASSWORD:false}
   storage:
-    # NOTE: 첨부파일 약 40GB - DB 아닌 볼륨 보관
     root: ${FILE_STORAGE_ROOT:./uploads}
 
 logging:

@@ -6,8 +6,6 @@ services:
     container_name: greentech-mysql
     restart: unless-stopped
     environment:
-      # NOTE: ?err 문법으로 미설정 시 compose 단계에서 즉시 실패시킨다
-      #       기본값을 두면 그 값이 저장소에 커밋되는 자격증명이 된다
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?.env 에 MYSQL_ROOT_PASSWORD 설정 필요}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-greentech_hr}
       MYSQL_USER: ${MYSQL_USER:-greentech}
@@ -23,7 +21,6 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
-      # NOTE: 비밀번호를 인자로 넘기면 컨테이너 프로세스 목록에 노출되므로 환경변수 참조 사용
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
       interval: 5s
       timeout: 5s
@@ -45,9 +42,9 @@ services:
       DB_PASSWORD: ${MYSQL_PASSWORD:?.env 에 MYSQL_PASSWORD 설정 필요}
       JWT_SECRET: ${JWT_SECRET:?.env 에 JWT_SECRET 설정 필요}
       FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:?.env 에 FIELD_ENCRYPTION_KEY 설정 필요}
-      BOOTSTRAP_PASSWORD: ${BOOTSTRAP_PASSWORD:?.env 에 BOOTSTRAP_PASSWORD 설정 필요}
       ADMIN_USERNAME: ${ADMIN_USERNAME:?.env 에 ADMIN_USERNAME 설정 필요}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?.env 에 ADMIN_PASSWORD 설정 필요}
+      ADMIN_RESET_PASSWORD: ${ADMIN_RESET_PASSWORD:-false}
       FILE_STORAGE_ROOT: /app/uploads
       TZ: Asia/Seoul
     ports:
