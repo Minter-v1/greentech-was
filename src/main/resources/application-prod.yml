@@ -6,10 +6,29 @@ spring:
 server:
   port: ${SERVER_PORT}
   forward-headers-strategy: framework
+  tomcat:
+    accesslog:
+      enabled: true
+      directory: ${LOG_DIR}
+      prefix: access
+      suffix: .log
+      file-date-format: .yyyy-MM-dd
+      rename-on-rotate: true
+      rotate: true
+      max-days: ${ACCESS_LOG_MAX_DAYS}
+      encoding: UTF-8
+      pattern: >-
+        %{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}t %a "%m %U %H" %s %b %D
+        "%{X-Forwarded-For}i" "%{User-Agent}i"
 
 app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS}
+  logging:
+    directory: ${LOG_DIR}
+    max-history: ${LOG_MAX_HISTORY}
+    max-file-size: ${LOG_MAX_FILE_SIZE}
+    total-size-cap: ${LOG_TOTAL_SIZE_CAP}
   storage:
     type: ncp
     endpoint: ${NCP_STORAGE_ENDPOINT}

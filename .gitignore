@@ -22,3 +22,5 @@ build/
 .env
 .env.*
 !.env.example
+*.tar
+*.tar.sha256

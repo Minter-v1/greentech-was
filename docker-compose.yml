@@ -58,12 +58,18 @@ services:
       NCP_STORAGE_SECRET_KEY: ${NCP_STORAGE_SECRET_KEY}
       LOG_LEVEL_APP: ${LOG_LEVEL_APP:?.env 에 LOG_LEVEL_APP 설정 필요}
       LOG_LEVEL_SQL: ${LOG_LEVEL_SQL:?.env 에 LOG_LEVEL_SQL 설정 필요}
+      LOG_DIR: ${LOG_DIR:?.env 에 LOG_DIR 설정 필요}
+      ACCESS_LOG_MAX_DAYS: ${ACCESS_LOG_MAX_DAYS:?.env 에 ACCESS_LOG_MAX_DAYS 설정 필요}
+      LOG_MAX_HISTORY: ${LOG_MAX_HISTORY:?.env 에 LOG_MAX_HISTORY 설정 필요}
+      LOG_MAX_FILE_SIZE: ${LOG_MAX_FILE_SIZE:?.env 에 LOG_MAX_FILE_SIZE 설정 필요}
+      LOG_TOTAL_SIZE_CAP: ${LOG_TOTAL_SIZE_CAP:?.env 에 LOG_TOTAL_SIZE_CAP 설정 필요}
       TZ: ${TZ:?.env 에 TZ 설정 필요}
       JAVA_OPTS: ${JAVA_OPTS:?.env 에 JAVA_OPTS 설정 필요}
     ports:
       - "${APP_PORT:?.env 에 APP_PORT 설정 필요}:${SERVER_PORT:?.env 에 SERVER_PORT 설정 필요}"
     volumes:
       - app-uploads:/app/uploads
+      - "${LOG_HOST_PATH:?.env 에 LOG_HOST_PATH 설정 필요}:${LOG_DIR:?.env 에 LOG_DIR 설정 필요}"
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:$$SERVER_PORT/actuator/health || exit 1"]
       interval: 10s

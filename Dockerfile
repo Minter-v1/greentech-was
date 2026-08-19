@@ -14,9 +14,9 @@ RUN ./gradlew --no-daemon clean bootJar -x test
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 
-RUN groupadd --system greentech \
-    && useradd --system --gid greentech --home /app greentech \
-    && mkdir -p /app/uploads \
+RUN groupadd --gid 10001 greentech \
+    && useradd --uid 10001 --gid greentech --no-create-home --home-dir /app greentech \
+    && mkdir -p /app/uploads /app/logs \
     && chown -R greentech:greentech /app
 
 COPY --from=builder --chown=greentech:greentech /workspace/build/libs/*.jar app.jar
