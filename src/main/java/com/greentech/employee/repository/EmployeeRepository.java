@@ -16,6 +16,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
     boolean existsByEmpNo(String empNo);
 
+    boolean existsByIdAndManagerId(Long employeeId, Long managerId);
+
     @EntityGraph(attributePaths = {"department", "jobPosition"})
     Optional<Employee> findWithOrgById(Long id);
 

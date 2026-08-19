@@ -5,13 +5,16 @@ import com.greentech.common.dto.res.ApiResult;
 import com.greentech.common.dto.res.PageResult;
 import com.greentech.employee.domain.Employee;
 import com.greentech.employee.dto.req.CertificateCreateReq;
+import com.greentech.employee.dto.req.CertificatePatchReq;
 import com.greentech.employee.dto.req.EducationCreateReq;
+import com.greentech.employee.dto.req.EducationPatchReq;
 import com.greentech.employee.dto.req.EmployeeContactUpsertReq;
 import com.greentech.employee.dto.req.EmployeeCreateReq;
 import com.greentech.employee.dto.req.EmployeeResignReq;
 import com.greentech.employee.dto.req.EmployeePatchReq;
 import com.greentech.employee.dto.req.EmployeeStatusChangeReq;
 import com.greentech.employee.dto.req.FamilyMemberCreateReq;
+import com.greentech.employee.dto.req.FamilyMemberPatchReq;
 import com.greentech.employee.dto.res.CertificateRes;
 import com.greentech.employee.dto.res.EducationRes;
 import com.greentech.employee.dto.res.EmployeeContactRes;
@@ -51,6 +54,8 @@ public class EmployeeController {
 
     private static final String HR_OR_ADMIN =
             "hasAnyAuthority('" + AppRole.ADMIN + "', '" + AppRole.HR + "')";
+    private static final String HR_OR_ADMIN_OR_SELF =
+            HR_OR_ADMIN + " or @employeeAuthorization.canRead(#id)";
 
     private final EmployeeService employeeService;
 
@@ -65,6 +70,7 @@ public class EmployeeController {
     }
 
     @Operation(summary = "사원 상세 조회", description = "주민등록번호는 마스킹 값으로만 반환")
+    @PreAuthorize(HR_OR_ADMIN_OR_SELF)
     @GetMapping("/{id}")
     public ApiResult<EmployeeDetailRes> findDetail(@PathVariable Long id) {
         return ApiResult.ok(employeeService.findDetail(id));
@@ -112,6 +118,7 @@ public class EmployeeController {
     }
 
     @Operation(summary = "발령 이력 조회")
+    @PreAuthorize(HR_OR_ADMIN_OR_SELF)
     @GetMapping("/{id}/histories")
     public ApiResult<List<EmploymentHistoryRes>> findHistories(@PathVariable Long id) {
         return ApiResult.ok(employeeService.findHistories(id));
@@ -120,6 +127,7 @@ public class EmployeeController {
     // MARK: 연락처
 
     @Operation(summary = "연락처 조회")
+    @PreAuthorize(HR_OR_ADMIN_OR_SELF)
     @GetMapping("/{id}/contact")
     public ApiResult<EmployeeContactRes> findContact(@PathVariable Long id) {
         return ApiResult.ok(employeeService.findContact(id));
@@ -136,6 +144,7 @@ public class EmployeeController {
     // MARK: 학력
 
     @Operation(summary = "학력 목록 조회")
+    @PreAuthorize(HR_OR_ADMIN_OR_SELF)
     @GetMapping("/{id}/educations")
     public ApiResult<List<EducationRes>> findEducations(@PathVariable Long id) {
         return ApiResult.ok(employeeService.findEducations(id));
@@ -150,6 +159,14 @@ public class EmployeeController {
         return ApiResult.ok(employeeService.addEducation(id, request), "학력이 등록되었습니다");
     }
 
+    @Operation(summary = "학력 부분 수정", description = "전송한 필드만 반영")
+    @PreAuthorize(HR_OR_ADMIN)
+    @PatchMapping("/educations/{educationId}")
+    public ApiResult<EducationRes> patchEducation(
+            @PathVariable Long educationId, @Valid @RequestBody EducationPatchReq request) {
+        return ApiResult.ok(employeeService.patchEducation(educationId, request), "학력이 수정되었습니다");
+    }
+
     @Operation(summary = "학력 삭제")
     @PreAuthorize(HR_OR_ADMIN)
     @DeleteMapping("/educations/{educationId}")
@@ -161,6 +178,7 @@ public class EmployeeController {
     // MARK: 자격증
 
     @Operation(summary = "자격증 목록 조회")
+    @PreAuthorize(HR_OR_ADMIN_OR_SELF)
     @GetMapping("/{id}/certificates")
     public ApiResult<List<CertificateRes>> findCertificates(@PathVariable Long id) {
         return ApiResult.ok(employeeService.findCertificates(id));
@@ -175,6 +193,14 @@ public class EmployeeController {
         return ApiResult.ok(employeeService.addCertificate(id, request), "자격증이 등록되었습니다");
     }
 
+    @Operation(summary = "자격증 부분 수정", description = "전송한 필드만 반영")
+    @PreAuthorize(HR_OR_ADMIN)
+    @PatchMapping("/certificates/{certificateId}")
+    public ApiResult<CertificateRes> patchCertificate(
+            @PathVariable Long certificateId, @Valid @RequestBody CertificatePatchReq request) {
+        return ApiResult.ok(employeeService.patchCertificate(certificateId, request), "자격증이 수정되었습니다");
+    }
+
     @Operation(summary = "자격증 삭제")
     @PreAuthorize(HR_OR_ADMIN)
     @DeleteMapping("/certificates/{certificateId}")
@@ -186,7 +212,7 @@ public class EmployeeController {
     // MARK: 가족사항
 
     @Operation(summary = "가족사항 목록 조회")
-    @PreAuthorize(HR_OR_ADMIN)
+    @PreAuthorize(HR_OR_ADMIN_OR_SELF)
     @GetMapping("/{id}/family-members")
     public ApiResult<List<FamilyMemberRes>> findFamilyMembers(@PathVariable Long id) {
         return ApiResult.ok(employeeService.findFamilyMembers(id));
@@ -199,6 +225,15 @@ public class EmployeeController {
     public ApiResult<FamilyMemberRes> addFamilyMember(
             @PathVariable Long id, @Valid @RequestBody FamilyMemberCreateReq request) {
         return ApiResult.ok(employeeService.addFamilyMember(id, request), "가족사항이 등록되었습니다");
+    }
+
+    @Operation(summary = "가족사항 부분 수정", description = "전송한 필드만 반영")
+    @PreAuthorize(HR_OR_ADMIN)
+    @PatchMapping("/family-members/{familyMemberId}")
+    public ApiResult<FamilyMemberRes> patchFamilyMember(
+            @PathVariable Long familyMemberId, @Valid @RequestBody FamilyMemberPatchReq request) {
+        return ApiResult.ok(
+                employeeService.patchFamilyMember(familyMemberId, request), "가족사항이 수정되었습니다");
     }
 
     @Operation(summary = "가족사항 삭제")

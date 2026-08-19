@@ -10,13 +10,16 @@ import com.greentech.employee.domain.EmployeeContact;
 import com.greentech.employee.domain.EmploymentHistory;
 import com.greentech.employee.domain.FamilyMember;
 import com.greentech.employee.dto.req.CertificateCreateReq;
+import com.greentech.employee.dto.req.CertificatePatchReq;
 import com.greentech.employee.dto.req.EducationCreateReq;
+import com.greentech.employee.dto.req.EducationPatchReq;
 import com.greentech.employee.dto.req.EmployeeContactUpsertReq;
 import com.greentech.employee.dto.req.EmployeeCreateReq;
 import com.greentech.employee.dto.req.EmployeeResignReq;
 import com.greentech.employee.dto.req.EmployeePatchReq;
 import com.greentech.employee.dto.req.EmployeeStatusChangeReq;
 import com.greentech.employee.dto.req.FamilyMemberCreateReq;
+import com.greentech.employee.dto.req.FamilyMemberPatchReq;
 import com.greentech.employee.dto.res.CertificateRes;
 import com.greentech.employee.dto.res.EducationRes;
 import com.greentech.employee.dto.res.EmployeeContactRes;
@@ -229,6 +232,21 @@ public class EmployeeService {
     }
 
     @Transactional
+    public EducationRes patchEducation(Long educationId, EducationPatchReq request) {
+        Education education = educationRepository.findById(educationId)
+                .orElseThrow(() -> BusinessException.notFound(ErrorCode.NOT_FOUND, educationId));
+
+        apply(request.schoolName(), education::setSchoolName);
+        apply(request.major(), education::setMajor);
+        apply(request.degree(), education::setDegree);
+        apply(request.admissionDate(), education::setAdmissionDate);
+        apply(request.graduationDate(), education::setGraduationDate);
+        apply(request.graduated(), education::setGraduated);
+
+        return EducationRes.from(education);
+    }
+
+    @Transactional
     public void deleteEducation(Long educationId) {
         educationRepository.deleteById(educationId);
     }
@@ -255,6 +273,20 @@ public class EmployeeService {
     }
 
     @Transactional
+    public CertificateRes patchCertificate(Long certificateId, CertificatePatchReq request) {
+        Certificate certificate = certificateRepository.findById(certificateId)
+                .orElseThrow(() -> BusinessException.notFound(ErrorCode.NOT_FOUND, certificateId));
+
+        apply(request.name(), certificate::setName);
+        apply(request.issuer(), certificate::setIssuer);
+        apply(request.licenseNo(), certificate::setLicenseNo);
+        apply(request.acquiredDate(), certificate::setAcquiredDate);
+        apply(request.expiryDate(), certificate::setExpiryDate);
+
+        return CertificateRes.from(certificate);
+    }
+
+    @Transactional
     public void deleteCertificate(Long certificateId) {
         certificateRepository.deleteById(certificateId);
     }
@@ -278,6 +310,20 @@ public class EmployeeService {
                 .cohabiting(Boolean.TRUE.equals(request.cohabiting()))
                 .build();
         return FamilyMemberRes.from(familyMemberRepository.save(member));
+    }
+
+    @Transactional
+    public FamilyMemberRes patchFamilyMember(Long familyMemberId, FamilyMemberPatchReq request) {
+        FamilyMember member = familyMemberRepository.findById(familyMemberId)
+                .orElseThrow(() -> BusinessException.notFound(ErrorCode.NOT_FOUND, familyMemberId));
+
+        apply(request.name(), member::setName);
+        apply(request.relation(), member::setRelation);
+        apply(request.birthDate(), member::setBirthDate);
+        apply(request.dependent(), member::setDependent);
+        apply(request.cohabiting(), member::setCohabiting);
+
+        return FamilyMemberRes.from(member);
     }
 
     @Transactional
