@@ -4,23 +4,17 @@ import com.greentech.account.domain.AppRole;
 import com.greentech.attachment.domain.Attachment;
 import com.greentech.attachment.dto.res.AttachmentRes;
 import com.greentech.attachment.repository.AttachmentRepository;
+import com.greentech.attachment.storage.FileStorage;
 import com.greentech.common.exception.BusinessException;
 import com.greentech.common.exception.ErrorCode;
 import com.greentech.security.SecurityUtils;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.security.MessageDigest;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,7 +29,7 @@ public class AttachmentService {
     private static final DateTimeFormatter DATE_PATH = DateTimeFormatter.ofPattern("yyyy/MM/dd");
 
     private final AttachmentRepository attachmentRepository;
-    private final StorageProperties storageProperties;
+    private final FileStorage fileStorage;
 
     @Transactional(readOnly = true)
     public List<AttachmentRes> findByOwner(Attachment.OwnerType ownerType, Long ownerId) {
@@ -71,31 +65,26 @@ public class AttachmentService {
             throw new BusinessException(ErrorCode.EMPTY_FILE);
         }
 
-        String relativePath = buildRelativePath(file.getOriginalFilename());
-        Path target = resolve(relativePath);
-
-        try {
-            Files.createDirectories(target.getParent());
-            try (InputStream in = file.getInputStream()) {
-                Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
-            }
-        } catch (IOException e) {
-            log.error("첨부파일 저장 실패 path={}", target, e);
-            throw new BusinessException(ErrorCode.FILE_STORAGE_ERROR);
-        }
+        String objectKey = buildObjectKey(file.getOriginalFilename());
+        FileStorage.StoredFile storedFile = fileStorage.store(objectKey, file);
 
         Attachment attachment = Attachment.builder()
                 .ownerType(ownerType)
                 .ownerId(ownerId)
                 .category(category)
                 .originalName(safeName(file.getOriginalFilename()))
-                .storedPath(relativePath)
+                .storedPath(storedFile.objectKey())
                 .contentType(file.getContentType())
                 .fileSize(file.getSize())
-                .checksum(checksum(target))
+                .checksum(storedFile.checksum())
                 .build();
 
-        return AttachmentRes.from(attachmentRepository.save(attachment));
+        try {
+            return AttachmentRes.from(attachmentRepository.saveAndFlush(attachment));
+        } catch (RuntimeException e) {
+            deleteStoredFile(storedFile.objectKey(), attachment.getId());
+            throw e;
+        }
     }
 
     @Transactional(readOnly = true)
@@ -104,14 +93,11 @@ public class AttachmentService {
                 .orElseThrow(() -> BusinessException.notFound(ErrorCode.ATTACHMENT_NOT_FOUND, attachmentId));
         ensureReadable(attachment.getOwnerType(), attachment.getOwnerId());
 
-        Path path = resolve(attachment.getStoredPath());
-        if (!Files.exists(path)) {
-            log.error("첨부파일 실물 누락 id={} path={}", attachmentId, path);
-            throw new BusinessException(ErrorCode.ATTACHMENT_NOT_FOUND, "저장된 파일을 찾을 수 없습니다");
-        }
-
         return new DownloadFile(
-                new FileSystemResource(path), attachment.getOriginalName(), attachment.getContentType());
+                fileStorage.load(attachment.getStoredPath()),
+                attachment.getOriginalName(),
+                attachment.getContentType(),
+                attachment.getFileSize());
     }
 
     @Transactional
@@ -119,29 +105,21 @@ public class AttachmentService {
         Attachment attachment = attachmentRepository.findById(attachmentId)
                 .orElseThrow(() -> BusinessException.notFound(ErrorCode.ATTACHMENT_NOT_FOUND, attachmentId));
 
-        // NOTE: 실물 삭제 실패가 트랜잭션을 되돌리지 않도록 분리
         attachmentRepository.delete(attachment);
+        deleteStoredFile(attachment.getStoredPath(), attachmentId);
+    }
 
+    private void deleteStoredFile(String objectKey, Long attachmentId) {
         try {
-            Files.deleteIfExists(resolve(attachment.getStoredPath()));
-        } catch (IOException e) {
-            log.warn("첨부파일 실물 삭제 실패 id={} path={}", attachmentId, attachment.getStoredPath(), e);
+            fileStorage.delete(objectKey);
+        } catch (RuntimeException e) {
+            log.warn("첨부파일 실물 삭제 실패 id={} key={}", attachmentId, objectKey, e);
         }
     }
 
     // MARK: 내부 헬퍼
 
-    private Path resolve(String relativePath) {
-        Path root = Path.of(storageProperties.root()).toAbsolutePath().normalize();
-        Path resolved = root.resolve(relativePath).normalize();
-        // NOTE: 경로 조작 차단
-        if (!resolved.startsWith(root)) {
-            throw new BusinessException(ErrorCode.FILE_STORAGE_ERROR, "허용되지 않은 저장 경로입니다");
-        }
-        return resolved;
-    }
-
-    private String buildRelativePath(String originalName) {
+    private String buildObjectKey(String originalName) {
         String extension = extensionOf(originalName);
         return "%s/%s%s".formatted(LocalDate.now().format(DATE_PATH), UUID.randomUUID(), extension);
     }
@@ -164,17 +142,7 @@ public class AttachmentService {
         return Path.of(originalName).getFileName().toString();
     }
 
-    private String checksum(Path path) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            return HexFormat.of().formatHex(digest.digest(Files.readAllBytes(path)));
-        } catch (Exception e) {
-            log.warn("체크섬 계산 실패 path={}", path, e);
-            return null;
-        }
-    }
-
     /** 다운로드 응답 구성 요소 */
-    public record DownloadFile(Resource resource, String originalName, String contentType) {
+    public record DownloadFile(Resource resource, String originalName, String contentType, long fileSize) {
     }
 }

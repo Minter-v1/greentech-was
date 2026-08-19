@@ -2,6 +2,9 @@ spring:
   application:
     name: greentech-was
 
+  profiles:
+    default: local
+
   datasource:
     url: ${DB_URL:jdbc:mysql://localhost:3306/greentech_hr?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
     username: ${DB_USERNAME:greentech}
@@ -79,8 +82,6 @@ app:
       username: ${ADMIN_USERNAME}
       password: ${ADMIN_PASSWORD}
       reset-password-on-start: ${ADMIN_RESET_PASSWORD:false}
-  storage:
-    root: ${FILE_STORAGE_ROOT:./uploads}
 
 logging:
   level:

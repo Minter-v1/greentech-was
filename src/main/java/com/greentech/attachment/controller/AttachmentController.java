@@ -76,6 +76,7 @@ public class AttachmentController {
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename*=UTF-8''" + encodedName)
                 .header(HttpHeaders.CONTENT_TYPE, contentType)
+                .contentLength(file.fileSize())
                 .body(file.resource());
     }
 

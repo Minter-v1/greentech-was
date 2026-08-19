@@ -1,0 +1,9 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+
+app:
+  storage:
+    type: local
+    root: ${FILE_STORAGE_ROOT:./uploads}

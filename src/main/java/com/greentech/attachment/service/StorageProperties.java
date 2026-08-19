@@ -2,13 +2,32 @@ package com.greentech.attachment.service;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-// TODO: 용량 증가 시 오브젝트 스토리지 전환 검토
 @ConfigurationProperties(prefix = "app.storage")
-public record StorageProperties(String root) {
+public record StorageProperties(
+        Type type,
+        String root,
+        String endpoint,
+        String region,
+        String bucket,
+        String accessKey,
+        String secretKey) {
 
     public StorageProperties {
+        if (type == null) {
+            type = Type.LOCAL;
+        }
         if (root == null || root.isBlank()) {
             root = "./uploads";
         }
+        if (endpoint == null || endpoint.isBlank()) {
+            endpoint = "https://kr.object.private.ncloudstorage.com";
+        }
+        if (region == null || region.isBlank()) {
+            region = "kr-standard";
+        }
+    }
+
+    public enum Type {
+        LOCAL, NCP
     }
 }

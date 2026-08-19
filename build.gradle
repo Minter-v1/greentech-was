@@ -26,6 +26,7 @@ repositories {
 
 ext {
     springdocVersion = '3.1.0'
+    awsSdkVersion = '2.42.37'
 }
 
 dependencies {
@@ -46,13 +47,23 @@ dependencies {
     // MARK: PATCH 부분 수정. 미전송과 명시적 null 구분
     implementation 'org.openapitools:jackson-databind-nullable:0.2.11'
 
+    // MARK: NCP Object Storage. S3 호환 API
+    implementation platform("software.amazon.awssdk:bom:${awsSdkVersion}")
+    implementation 'software.amazon.awssdk:s3'
+
     // MARK: API 문서
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
 
     runtimeOnly 'com.mysql:mysql-connector-j'
 
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
 }

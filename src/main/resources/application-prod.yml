@@ -1,0 +1,13 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+app:
+  storage:
+    type: ncp
+    endpoint: ${NCP_STORAGE_ENDPOINT:https://kr.object.private.ncloudstorage.com}
+    region: ${NCP_STORAGE_REGION:kr-standard}
+    bucket: ${NCP_STORAGE_BUCKET}
+    access-key: ${NCP_STORAGE_ACCESS_KEY}
+    secret-key: ${NCP_STORAGE_SECRET_KEY}
