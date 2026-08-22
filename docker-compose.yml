@@ -71,7 +71,7 @@ services:
       - app-uploads:/app/uploads
       - "${LOG_HOST_PATH:?.env 에 LOG_HOST_PATH 설정 필요}:${LOG_DIR:?.env 에 LOG_DIR 설정 필요}"
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:$$SERVER_PORT/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:$$SERVER_PORT/actuator/health/liveness || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 12
